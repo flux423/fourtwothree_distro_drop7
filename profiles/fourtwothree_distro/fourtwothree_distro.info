@@ -97,7 +97,7 @@ dependencies[] = weight
 dependencies[] = xmlsitemap
 
 ; Information added by drupal.org packaging script on 2013-07-31
-version = "7.x-1.0-rc3"
+version = "7.x-1.0-rc4"
 core = "7.x"
 project = "423distro"
 datestamp = "1375308084"

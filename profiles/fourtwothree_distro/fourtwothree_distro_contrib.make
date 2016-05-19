@@ -142,3 +142,9 @@ projects[defaultconfig][patch][] =
 ; Themes
 projects[adaptivetheme][version] = 3.x
 projects[adaptivetheme][type] = theme
+
+; Include Theme
+projects[at_423client][type] = theme
+projects[at_423client][download][type] = git
+projects[at_423client][download][contrib_destination] = sites/all/themes
+projects[at_423client][download][url] = https://github.com/flux423/at_423client.git

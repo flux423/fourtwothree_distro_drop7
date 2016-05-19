@@ -1,0 +1,252 @@
+<?php
+/**
+ * @file
+ * The Term Disable Node Listings module allows a user to selectively
+ * disable the node listing on taxonomy term pages on a vocabulary basis
+ * on the edit vocabulary page.
+ */
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function disable_term_node_listings_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'menu_alter') {
+    $group = $implementations['disable_term_node_listings'];
+    unset($implementations['disable_term_node_listings']);
+    $implementations['disable_term_node_listings'] = $group;
+  }
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function disable_term_node_listings_menu_alter(&$items) {
+  // Take over from the taxonomy module.
+  $items['taxonomy/term/%taxonomy_term'] = array(
+    'page callback' => 'disable_term_node_listings_term_page',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+  );
+}
+
+/**
+ * Menu callback; displays all nodes associated with a term.
+ *
+ * @param object $term
+ *   The taxonomy term.
+ *
+ * @return string
+ *   The page content.
+ */
+function disable_term_node_listings_term_page($term) {
+  // Check if the term that this vocabulary belongs to has listings disabled.
+  $disable_status = variable_get('disable_term_node_listings_' . $term->vocabulary_machine_name, 'default');
+
+  $term_hooks = _disable_term_node_listings_retrieve_term_menu_hooks();
+  $heaviest_term_hook = _disable_term_node_listings_get_heaviest_term_menu_hook($term_hooks);
+
+  // If we have a callback available in the heaviest term menu hook that needs
+  // files loaded let's get it loaded so that the function is available
+  // to be called.
+  if ($disable_status == 'default') {
+    _disable_term_node_listings_get_heaviest_term_menu_hook_load_file($heaviest_term_hook);
+  }
+
+  switch ($disable_status) {
+    case 'hide_listing':
+      // Let i18n translate the term if it exists.
+      if (module_exists('i18n_taxonomy') && function_exists('i18n_taxonomy_localize_terms')) {
+        $term = i18n_taxonomy_localize_terms($term);
+      }
+
+      // Set the title and return all the field data.
+      drupal_set_title($term->name);
+      return taxonomy_term_view($term, 'full');
+
+    break;
+
+    case '404':
+      return MENU_NOT_FOUND;
+
+    break;
+
+    case '403':
+      return MENU_ACCESS_DENIED;
+
+    break;
+
+    default:
+      if (!empty($heaviest_term_hook) && function_exists($heaviest_term_hook['page callback'])) {
+        $page_callback = $heaviest_term_hook['page callback'];
+        // If the page has no arguments assume that it only wants the term
+        // (inheriting from Taxonomy module).
+        $page_args = isset($heaviest_term_hook['page arguments']) ? $heaviest_term_hook['page arguments'] : array($term);
+
+        // Find page arguments that are numbers and turn them into their path
+        // value to pass into the function correctly.
+        foreach ($page_args as &$page_arg) {
+          if (is_numeric($page_arg)) {
+            $page_arg = arg($page_arg);
+          }
+        }
+
+        return call_user_func_array($page_callback, $page_args);
+      }
+      else {
+        // We have to pull in taxonomy's pages include to call its function.
+        module_load_include('inc', 'taxonomy', 'taxonomy.pages');
+        return taxonomy_term_page($term);
+      }
+
+    break;
+
+  }
+}
+
+
+/**
+ * Get list of other modules trying to take over this page and play nice.
+ *
+ * @access private
+ *
+ * @return array $term_hooks
+ *   List of menu_alter_hooks that take over the term page.
+ */
+function _disable_term_node_listings_retrieve_term_menu_hooks() {
+  $modules = module_implements('menu_alter');
+
+  $term_hooks = array();
+
+  if ($term_hooks_cache = cache_get('disable_term_node_listings_term_menu_hooks')) {
+    $term_hooks = $term_hooks_cache->data;
+  }
+  else {
+    foreach ($modules as $module) {
+      $function = $module . '_menu_alter';
+      $items = array();
+
+      if (function_exists($function)) {
+        // Extract the menu items from all modules so we can find
+        // which ones have term alters.
+        $function($items);
+
+        if (isset($items['taxonomy/term/%taxonomy_term'])) {
+          if ($module != 'disable_term_node_listings') {
+            $term_hooks[$module] = $items['taxonomy/term/%taxonomy_term'];
+          }
+        }
+        // Views uses a different argument.
+        elseif (isset($items['taxonomy/term/%views_arg'])) {
+          $term_hooks[$module] = $items['taxonomy/term/%views_arg'];
+        }
+      }
+    }
+
+    // Store our findings in cache.
+    cache_set('disable_term_node_listings_term_menu_hooks', $term_hooks, 'cache');
+  }
+
+  return $term_hooks;
+}
+
+
+/**
+ * Get the heaviest term_menu_alter hook to determine which one should be used.
+ *
+ * @access private
+ *
+ * @param array $term_menu_hooks
+ *   List of menu_alter_hooks that take over the term page.
+ *
+ * @return array $heaviest_term_hook
+ *   The last hook in order. This is the active menu alter hook.
+ */
+function _disable_term_node_listings_get_heaviest_term_menu_hook($term_menu_hooks) {
+  $heaviest_term_hook = end($term_menu_hooks);
+  $heaviest_term_hook['#module'] = key($term_menu_hooks);
+
+  return $heaviest_term_hook;
+}
+
+
+/**
+ * Load include files of the the module whose function we will run.
+ *
+ * @access private
+ *
+ * @param array $term_menu_hook
+ *   Contents of a menu alter hook for a term page.
+ */
+function _disable_term_node_listings_get_heaviest_term_menu_hook_load_file($term_menu_hook) {
+  if (!empty($term_menu_hook) && !empty($term_menu_hook['file'])) {
+    $file = DRUPAL_ROOT . '/' . $term_menu_hook['file path'] . '/' . $term_menu_hook['file'];
+
+    if (is_file($file)) {
+      require_once $file;
+    }
+  }
+}
+
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Used to add toggle checkbox to the vocabulary edit pages.
+ */
+function disable_term_node_listings_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'taxonomy_form_vocabulary' && !isset($form_state['confirm_delete'])) {
+    $vocab_machine_name = $form['#vocabulary']->machine_name;
+    $disable_status = variable_get('disable_term_node_listings_' . $vocab_machine_name, 'default');
+
+    // Status toggle switch.
+    $form['disable_term_node_listings_status'] = array(
+      '#type' => 'radios',
+      '#weight' => 3,
+      '#title' => t('Node listings'),
+      '#description' => t('This field controls the display of all terms in this vocabulary.'),
+      '#default_value' => $disable_status,
+      '#options' => array(
+        'default' => t('Use default node listings'),
+        'hide_listing' => t('Disable node listing for all terms'),
+        '404' => t('Display 404 page'),
+        '403' => t('Display 403 page'),
+      ),
+    );
+
+    $form['#submit'][] = '_disable_term_node_listings_submit_handler';
+  }
+}
+
+/**
+ * Save the status of the taxonomy term to the database.
+ */
+function _disable_term_node_listings_submit_handler($form, &$form_state) {
+  // Machine name is not available when we are deleting a term
+  // so don't try to save the variable.
+  if (isset($form_state['values']['machine_name'])) {
+    $vocab_machine_name = $form_state['values']['machine_name'];
+
+    // Store the status of this vocabulary based on user input.
+    $disable_status = $form_state['values']['disable_term_node_listings_status'];
+    variable_set('disable_term_node_listings_' . $vocab_machine_name, $disable_status);
+  }
+}
+
+/**
+ * Implements hook_taxonomy_vocabulary_delete().
+ */
+function disable_term_node_listings_taxonomy_vocabulary_delete($vocabulary) {
+  // If the vocabulary gets deleted, clean up our variable as well.
+  variable_del('disable_term_node_listings_' . $vocabulary->machine_name);
+}
+
+/**
+ * Implements hook_taxonomy_vocabulary_update().
+ */
+function disable_term_node_listings_taxonomy_vocabulary_update($vocabulary) {
+  // If the vocabulary machine name changed
+  // delete the variable associated with the old name.
+  if ($vocabulary->old_machine_name != $vocabulary->machine_name) {
+    variable_del('disable_term_node_listings_' . $vocabulary->old_machine_name);
+  }
+}

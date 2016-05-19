@@ -1,0 +1,23 @@
+name = Flex Slider
+description = Integrate the Flex Slider library with Drupal
+core = 7.x
+package = Flex Slider
+
+; Dependencies
+dependencies[] = libraries
+dependencies[] = ctools
+dependencies[] = image
+
+; Files
+files[] = flexslider.module
+files[] = theme/flexslider.theme.inc
+files[] = flexslider.test
+
+; Configuration link
+configure = admin/config/media/flexslider
+; Information added by Drupal.org packaging script on 2015-11-06
+version = "7.x-1.0-rc3+11-dev"
+core = "7.x"
+project = "flexslider"
+datestamp = "1446839959"
+

@@ -1,0 +1,104 @@
+name = 423distro
+description = 423distobution make of panopoly.
+core = 7.x
+api = 2
+exclusive = 1
+base = panopoly
+
+; Drupal Core
+dependencies[] = menu
+dependencies[] = image
+dependencies[] = list
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = taxonomy
+dependencies[] = search
+dependencies[] = shortcut
+dependencies[] = field
+dependencies[] = field_ui
+dependencies[] = file
+dependencies[] = dblog
+dependencies[] = update
+dependencies[] = rdf
+
+; Panopoly Foundation
+dependencies[] = panopoly_core
+dependencies[] = panopoly_images
+dependencies[] = panopoly_theme
+dependencies[] = panopoly_magic
+dependencies[] = panopoly_widgets
+dependencies[] = panopoly_admin
+dependencies[] = panopoly_users
+
+; Panopoly Toolset
+dependencies[] = panopoly_pages
+dependencies[] = panopoly_search
+dependencies[] = panopoly_wysiwyg
+
+; Panopoly Contrib
+dependencies[] = panopoly_config
+dependencies[] = panopoly_seo
+;dependencies[] = panopoly_news
+;dependencies[] = panopoly_faq
+
+; Panopoly Recommended - Admin & UI
+dependencies[] = navbar
+dependencies[] = breakpoints
+dependencies[] = backports
+dependencies[] = simplified_menu_admin
+dependencies[] = save_draft
+dependencies[] = module_filter
+dependencies[] = date_popup_authored
+dependencies[] = views_ui
+
+; Panopoly Recommended - Other
+dependencies[] = devel
+dependencies[] = uuid
+dependencies[] = apps
+
+
+; Contrib Depends
+dependencies[] = compact_forms
+;dependencies[] = mini_panels
+dependencies[] = email
+dependencies[] = entity2text
+dependencies[] = entity_rules
+dependencies[] = entityform
+dependencies[] = menu_icons
+dependencies[] = phone
+dependencies[] = rules
+;dependencies[] = uuid_features
+;dependencies[] = views_slideshow
+dependencies[] = adminrole
+;dependencies[] = advanced_help
+dependencies[] = contemplate
+dependencies[] = content_type_extras
+dependencies[] = email
+dependencies[] = entity2text
+dependencies[] = entity_rules
+dependencies[] = entityform
+dependencies[] = insert_view
+dependencies[] = jcarousel
+;dependencies[] = menu_icons
+dependencies[] = phone
+dependencies[] = views_accordion
+dependencies[] = auto_menutitle
+dependencies[] = cer
+dependencies[] = colorbox
+dependencies[] = disable_term_node_listings
+;dependencies[] = entity_dependency
+;dependencies[] = entityreference_current
+dependencies[] = eva
+dependencies[] = field_multiple_limit
+dependencies[] = flexslider
+dependencies[] = metatag
+dependencies[] = weight
+dependencies[] = xmlsitemap
+
+; Information added by drupal.org packaging script on 2013-07-31
+version = "7.x-1.0-rc3"
+core = "7.x"
+project = "423distro"
+datestamp = "1375308084"
+

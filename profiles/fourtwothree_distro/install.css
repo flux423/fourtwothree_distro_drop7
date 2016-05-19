@@ -1,0 +1,29 @@
+/**
+ * Stylesheet for Panopoly Profile
+ */
+#panopoly-theme-selection-form .form-item-theme {
+	clear:both;
+	margin-top:.5em;
+	margin-bottom:.5em;
+}
+
+#panopoly-theme-selection-form .form-item-theme label img {
+	float:left;
+	margin-right:1em;
+	width:100px;
+}
+
+#panopoly-apps-check #edit-pantheon img {
+	float:right;
+	margin-bottom:1em;
+	margin-left:1em;
+}
+
+body.maintenance-page #sidebar-first {
+	padding-top:150px;
+	background:transparent url(423-logo.gif) no-repeat left top;
+}
+
+body.maintenance-page #logo {
+	display:none;
+}

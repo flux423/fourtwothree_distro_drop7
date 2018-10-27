@@ -1,6 +1,4 @@
 <?php
-// $Id: adminrole.module,v 1.2.2.8.2.11 2010/08/14 17:59:20 davereid Exp $
-
 /**
  * @file
  * This module simply gives a designated role all permissions every time the
@@ -27,7 +25,7 @@ function adminrole_form_user_admin_settings_alter(&$form, $form_state) {
     '#title' => t('Administrator role'),
     '#default_value' => variable_get('user_admin_role', 0),
     '#options' => array(0 => t('Disabled')) + $roles,
-    '#description' => t('This role will be automatically assign new permissions whenever a module is enabled, field is added/updated or entity is aded/updated.'),
+    '#description' => t('This role will be automatically assigned new permissions whenever a module is enabled, field is added/updated or an entity is added/updated.'),
   );
 }
 
@@ -69,7 +67,7 @@ function adminrole_update_permissions() {
   static $messaged;
   if ($rid = variable_get('user_admin_role', 0)) {
     foreach (module_implements('permission') as $module) {
-      foreach(module_invoke($module, 'permission') as $key => $perm) {
+      foreach (module_invoke($module, 'permission') as $key => $perm) {
         $perms[$key] = $module;
       }
     }

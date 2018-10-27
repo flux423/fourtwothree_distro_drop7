@@ -22,6 +22,8 @@ function globalredirect_help($path, $arg) {
 function globalredirect_init() {
   global $language;
 
+  require_once(DRUPAL_ROOT . '/includes/locale.inc');
+
   /**
    * Get the settings.
    */
@@ -43,17 +45,17 @@ function globalredirect_init() {
     }
   }
 
+  // Get the query string parameters. If none set, set to NULL.
+  $query_string = drupal_get_query_parameters();
+  if (empty($query_string)) {
+    $query_string = NULL;
+  }
+
   // Store the destination from the $_GET as, if we leave it in, drupal_goto()
   // will go to that instead.
   if (isset($_GET['destination'])) {
     $destination = $_GET['destination'];
     unset($_GET['destination']);
-  }
-
-  // Get the query string parameters. If none set, set to NULL
-  $query_string = drupal_get_query_parameters();
-  if (empty($query_string)) {
-    $query_string = NULL;
   }
 
   // Establish the language prefix that should be used, ie. the one that
@@ -65,6 +67,7 @@ function globalredirect_init() {
     'alias' => FALSE,
     'prefix' => '',
     'external' => FALSE,
+    'globalredirect' => TRUE, // inform other modules that hook_url_outbound_alter invoked by globalredirect
   );
 
   // Get the request path. We cannot use request_path() as it uses a completely trimmed path.
@@ -126,7 +129,7 @@ function globalredirect_init() {
 
 
   // If the feature is enabled, check and redirect taxonomy/term/* requests to their proper handler defined by hook_term_path().
-  if ($settings['term_path_handler'] && module_exists('taxonomy') && preg_match('/taxonomy\/term\/([0-9]+)$/', $current_path, $matches)) {
+  if ($settings['term_path_handler'] && module_exists('taxonomy') && preg_match('`^taxonomy/term/(\d+)$`', $current_path, $matches)) {
     // So the feature is enabled, as is taxonomy module and the current request is a taxonomy term page.
     // NOTE: This will only match taxonomy term pages WITHOUT a depth modifier
     $term = taxonomy_term_load($matches[1]);
@@ -134,6 +137,12 @@ function globalredirect_init() {
     // Get the term path for this term (handler is defined in the vocab table under module). If it differs from the request, then redirect.
     if (!empty($term) && ($term_path = entity_uri('taxonomy_term', $term)) && $term_path['path'] != $current_path) {
       $current_path = $term_path['path'];
+      if (isset($options['query'])) {
+        $options['query'] = array_merge($options['query'], $term_path['options']['query']);
+      }
+      elseif (isset($term_path['options']['query'])) {
+        $options['query'] = $term_path['options']['query'];
+      }
     }
   }
 
@@ -215,8 +224,10 @@ function globalredirect_init() {
   // Compare the request to the alias. This also works as a 'deslashing'
   // agent. If we have a language prefix then prefix the alias
   if ($request_path != $prefix . $alias) {
-    // If it's not just a slash or user has deslash on, redirect
-    if (str_replace($prefix . $alias, '', $request_path) != '/' || $settings['deslash']) {
+    // If it's not just a slash or user has deslash on, redirect, but avoid
+    // redirecting to a directory if we are only deslashing, as apache mod_dir
+    // can cause an infinite loop.
+    if (str_replace($prefix . $alias, '', $request_path) != '/' || ($settings['deslash'] && !is_dir($alias))) {
       globalredirect_goto($alias, $options);
     }
   }
@@ -302,11 +313,23 @@ function globalredirect_menu() {
     'description' => 'Chose which features you would like enabled for Global Redirect',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('globalredirect_settings'),
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('administer global redirect'),
     'file' => 'globalredirect.admin.inc',
   );
 
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function globalredirect_permission() {
+  return array(
+    'administer global redirect' => array(
+      'title' => t('Administer Global Redirect'),
+      'description' => t('Allow access to configure Global Redirect module.'),
+    ),
+  );
 }
 
 /**
@@ -339,7 +362,7 @@ function _globalredirect_is_active($settings) {
    * If the site is in offline mode there is little point doing any of this as
    * you might end up redirecting to a 503.
    */
-  if (variable_get('site_offline', 0) == 1) {
+  if (variable_get('maintenance_mode', 0) == 1) {
     return FALSE;
   }
 

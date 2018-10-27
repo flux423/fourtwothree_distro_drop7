@@ -1,3 +1,182 @@
+7.x-1.57, 2018-10-18
+-------------------
+- No changes since last release.
+
+7.x-1.56, 2018-10-10
+-------------------
+- No changes since last release.
+
+7.x-1.55, 2018-07-04
+-------------------
+- No changes since last release.
+
+7.x-1.54, 2018-05-10
+-------------------
+- Upgrade media and media_youtube in panopoly_widgets.
+- Update to Drupal core 7.59 and Media for SA-CORE-2018-004.
+- File and Image widgets show PHP notices when underlying file has been deleted.
+- Widgets can be saved without any content.
+- Update and patch Simple GMAP.
+- Update TableField to 7.x-3.1.
+
+7.x-1.51, 2018-02-22
+-------------------
+- No changes since last release.
+
+7.x-1.50, 2018-02-15
+-------------------
+- No changes since last release.
+
+7.x-1.49, 2017-12-13
+-------------------
+- No changes since last release.
+
+7.x-1.48, 2017-11-30
+-------------------
+- Edit file button appears on Media style selector modal.
+- Update to Media 2.13 and File Entity 2.12.
+
+7.x-1.47, 2017-08-17
+-------------------
+- No changes since last release.
+
+7.x-1.46, 2017-06-21
+-------------------
+- Fields shown when adding a reusable widget, even if the user doesn't have
+  permission to edit them.
+- Use Media Browser on Spotlight widget.
+
+7.x-1.45, 2017-05-11
+-------------------
+- Update of Media to 2.1 for security issue DRUPAL-SA-CONTRIB-2017-044.
+- Add option to Submenu widget to control how many levels down to expand
+  children, when using the "Expand all children" option.
+
+7.x-1.44, 2017-04-13
+-------------------
+- Update to Media 2.0.
+- Incorrect image style used in WYSIWYG on updated sites.
+
+7.x-1.43, 2017-02-22
+-------------------
+- No changes since last release.
+
+7.x-1.42, 2017-02-17
+-------------------
+- Update Media module to 7.x-2.0-rc3.
+- Spotlight title display problems at mobile width.
+- Use linkit on path for "Make title a link" for all FPP widgets.
+- Use linkit on Spotlight.
+- URLs truncated on Image widgets.
+
+Panopoly Widgets 7.x-1.41, 2016-11-17
+------------------------------
+- Switch Image widget to use Media Browser.
+
+Panopoly Widgets 7.x-1.40, 2016-08-20
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.39, 2016-08-18
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.38, 2016-08-03
+------------------------------
+- Ability to link images placed with image widget.
+
+Panopoly Widgets 7.x-1.37, 2016-06-16
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.36, 2016-06-16
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.35, 2016-05-04
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.34, 2016-04-20
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.33, 2016-04-14
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.32, 2016-03-03
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.31, 2016-02-25
+------------------------------
+- Panopoly_widgets Schema Update 7016 Integrity constraint violation.
+- Pass entity to 'panopoly_spotlight_wrapper' and 'panopoly_spotlight_view'
+  theme functions.
+
+Panopoly Widgets 7.x-1.30, 2016-01-06
+------------------------------
+- Access denied when adding Media in WYSIWYG.
+- Don't set default image for image widget.
+
+Panopoly Widgets 7.x-1.29, 2015-11-18
+------------------------------
+- Patching media for opening multiple media browser popups.
+- Update to Media 2.0-beta1 and File Entity 2.0-beta2.
+
+Panopoly Widgets 7.x-1.28, 2015-10-21
+------------------------------
+- Text on tabs on Media Browser is lower than it is on other interfaces.
+
+Panopoly Widgets 7.x-1.27, 2015-09-02
+------------------------------
+- No changes since last release.
+
+Panopoly Widgets 7.x-1.26, 2015-08-19
+------------------------------
+- Panopoly Widgets - support the Title module.
+- Counting Spotlight clicks.
+- Update media_vimeo to version 2.1.
+- Update Vimeo configuration export.
+- Spotlight accessibility regressions.
+- Panopoly Widgets overridden after upgrade to -dev.
+- Move rendering of Spotlight formatter into theme template.
+- Update tablefield to version 2.4.
+
+Panopoly Widgets 7.x-1.25, 2015-07-08
+------------------------------
+- Split spotlight JS into it's own file.
+
+Panopoly Widgets 7.x-1.24, 2015-07-02
+------------------------------
+- Media dialog missing styles.
+- Update to media_youtube 3.0.
+- Update to menu_block 2.7.
+
+Panopoly Widgets 7.x-1.23, 2015-06-17
+------------------------------
+- Update jquery_update to version 2.5.
+- Spotlight titles without descriptions wrapping to a second line.
+- Update menu_block to version 2.6.
+
+Panopoly Widgets 7.x-1.22, 2015-06-04
+------------------------------
+- Add locale language filter to "Add content item" widget View.
+- Update Media to 2.0-alpha4.
+- Update 'menu_block' module to 2.5.
+- Spotlight widget shouldn't assume that image exists when rendering.
+- Revert "Issue #2479569: Update tablefield to version 2.4".
+- Update tablefield to version 2.4.
+
+Panopoly Widgets 7.x-1.21, 2015-04-29
+------------------------------
+- Update Features module to version 2.5.
+- Content Item widget initial preview is confusing.
+- Document names in the Media "Library" overflow outside of their boxes.
+- "File name" filter in Media "Library" loses focus after each keystroke.
+- Media browser tabs give little indication that a tab is selected.
+
 Panopoly Widgets 7.x-1.20, 2015-03-25
 ------------------------------
 - CHANGELOG.txt updates for 1.19 went wrong.

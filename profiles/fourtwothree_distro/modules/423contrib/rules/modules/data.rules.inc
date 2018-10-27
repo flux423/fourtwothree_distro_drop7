@@ -1,9 +1,11 @@
 <?php
 
 /**
- * @file General data related rules integration
+ * @file
+ * General data related rules integration.
  *
  * @addtogroup rules
+ *
  * @{
  */
 
@@ -22,6 +24,7 @@ function rules_data_category_info() {
 
 /**
  * Implements hook_rules_file_info() on behalf of the pseudo data module.
+ *
  * @see rules_core_modules()
  */
 function rules_data_file_info() {
@@ -30,6 +33,7 @@ function rules_data_file_info() {
 
 /**
  * Implements hook_rules_action_info() on behalf of the pseudo data module.
+ *
  * @see rules_core_modules()
  */
 function rules_data_action_info() {
@@ -220,16 +224,6 @@ function rules_data_action_info() {
         'label' => t('Value to convert'),
         'default mode' => 'selector',
       ),
-      // For to-integer conversion only.
-      'rounding_behavior' => array(
-        'type' => 'token',
-        'label' => t('Rounding behavior'),
-        'description' => t('The rounding behavior the conversion should use.'),
-        'options list' => 'rules_action_data_convert_rounding_behavior_options',
-        'restriction' => 'input',
-        'default value' => 'round',
-        'optional' => TRUE,
-      ),
     ),
     'provides' => array(
       'conversion_result' => array(
@@ -312,7 +306,7 @@ function rules_action_data_set_form_alter(&$form, &$form_state, $options, RulesA
   else {
     // Change the data parameter to be not editable.
     $form['parameter']['data']['settings']['#access'] = FALSE;
-    // TODO: improve display
+    // @todo Improve display.
     $form['parameter']['data']['info'] = array(
       '#prefix' => '<p>',
       '#markup' => t('<strong>Selected data:</strong> %selector', array('%selector' => $element->settings['data:select'])),
@@ -379,7 +373,6 @@ function rules_data_list_form_alter(&$form, &$form_state, $options, RulesAbstrac
   }
 }
 
-
 /**
  * Form alter callback for actions relying on the entity type or the data type.
  */
@@ -410,7 +403,7 @@ function rules_action_type_form_alter(&$form, &$form_state, $options, RulesAbstr
     unset($form['submit']);
     unset($form['provides']);
     // Disable #ajax for the first step as it has troubles with lazy-loaded JS.
-    // @todo: Re-enable once JS lazy-loading is fixed in core.
+    // @todo Re-enable once JS lazy-loading is fixed in core.
     unset($form['parameter']['type']['settings']['type']['#ajax']);
     unset($form['reload']['#ajax']);
   }
@@ -489,6 +482,7 @@ function rules_data_action_data_create_options() {
 
 /**
  * Implements hook_rules_condition_info() on behalf of the pseudo data module.
+ *
  * @see rules_core_modules()
  */
 function rules_data_condition_info() {
@@ -655,7 +649,7 @@ function rules_condition_data_is_form_alter(&$form, &$form_state, $options, Rule
   else {
     // Change the data parameter to be not editable.
     $form['parameter']['data']['settings']['#access'] = FALSE;
-    // TODO: improve display
+    // @todo Improve display.
     $form['parameter']['data']['info'] = array(
       '#prefix' => '<p>',
       '#markup' => t('<strong>Selected data:</strong> %selector', array('%selector' => $element->settings['data:select'])),

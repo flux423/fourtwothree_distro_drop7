@@ -1,9 +1,8 @@
 <?php
 
 /**
- * @file media_youtube/includes/media_youtube.formatters.inc
- *
- * Formatters for Media: YouTube.
+ * @file
+ * File formatters for YouTube videos.
  */
 
 /**
@@ -13,29 +12,28 @@ function media_youtube_file_formatter_info() {
   $formatters['media_youtube_video'] = array(
     'label' => t('YouTube Video'),
     'file types' => array('video'),
-    'default settings' => array(),
+    'default settings' => array(
+      'width' => 640,
+      'height' => 390,
+      'autohide' => 2,
+      'autoplay' => FALSE,
+      'color' => 'red',
+      'enablejsapi' => FALSE,
+      'loop' => FALSE,
+      'modestbranding' => FALSE,
+      'nocookie' => FALSE,
+      'origin' => '',
+      'protocol' => 'https:',
+      'protocol_specify' => FALSE,
+      'rel' => TRUE,
+      'showinfo' => TRUE,
+      'theme' => 'dark',
+      'captions' => FALSE,
+      'controls' => FALSE,
+    ),
     'view callback' => 'media_youtube_file_formatter_video_view',
     'settings callback' => 'media_youtube_file_formatter_video_settings',
     'mime types' => array('video/youtube'),
-  );
-
-  $formatters['media_youtube_video']['default settings'] = array(
-    'width' => 640,
-    'height' => 390,
-    'autohide' => 2,
-    'autoplay' => FALSE,
-    'color' => 'red',
-    'enablejsapi' => FALSE,
-    'loop' => FALSE,
-    'modestbranding' => FALSE,
-    'nocookie' => FALSE,
-    'origin' => '',
-    'protocol' => 'https:',
-    'protocol_specify' => FALSE,
-    'rel' => TRUE,
-    'showinfo' => TRUE,
-    'theme' => 'dark',
-    'captions' => FALSE,
   );
 
   $formatters['media_youtube_image'] = array(
@@ -57,6 +55,7 @@ function media_youtube_file_formatter_info() {
  */
 function media_youtube_file_formatter_video_view($file, $display, $langcode) {
   $scheme = file_uri_scheme($file->uri);
+
   // WYSIWYG does not yet support video inside a running editor instance.
   if ($scheme == 'youtube' && empty($file->override['wysiwyg'])) {
     $element = array(
@@ -68,9 +67,10 @@ function media_youtube_file_formatter_video_view($file, $display, $langcode) {
     // Fake a default for attributes so the ternary doesn't choke.
     $display['settings']['attributes'] = array();
 
-    foreach (array('width', 'height', 'autohide', 'autoplay', 'color', 'enablejsapi', 'loop', 'modestbranding', 'nocookie', 'origin', 'protocol', 'protocol_specify', 'rel', 'showinfo', 'theme', 'attributes', 'captions') as $setting) {
+    foreach (array('width', 'height', 'autohide', 'autoplay', 'color', 'enablejsapi', 'loop', 'modestbranding', 'nocookie', 'origin', 'protocol', 'protocol_specify', 'rel', 'showinfo', 'theme', 'attributes', 'captions','controls') as $setting) {
       $element['#options'][$setting] = isset($file->override[$setting]) ? $file->override[$setting] : $display['settings'][$setting];
     }
+
     return $element;
   }
 }
@@ -147,8 +147,13 @@ function media_youtube_file_formatter_video_settings($form, &$form_state, $setti
     '#type' => 'checkbox',
     '#default_value' => $settings['loop'],
   );
+  $element['controls'] = array(
+    '#title' => t('Show Controls'),
+    '#type' => 'checkbox',
+    '#default_value' => $settings['controls'],
+  );
 
-  // Note: make sure the positive/negitive language lines up with option
+  // Note: make sure the positive/negative language lines up with option
   // processing in media_youtube.theme.inc.
   $element['showinfo'] = array(
     '#title' => t('Display video title and uploader'),
@@ -174,7 +179,7 @@ function media_youtube_file_formatter_video_settings($form, &$form_state, $setti
     '#title' => t('Specify an http protocol'),
     '#type' => 'checkbox',
     '#default_value' => $settings['protocol_specify'],
-    '#description' => t('An explicit protocol may be neccesary for videos embedded in RSS feeds and emails. If no protocol is specified, iframes will be protocol relative.'),
+    '#description' => t('An explicit protocol may be necessary for videos embedded in RSS feeds and emails. If no protocol is specified, iframes will be protocol relative.'),
   );
   $element['protocol'] = array(
     '#title' => t('Iframe protocol'),
@@ -218,7 +223,6 @@ function media_youtube_file_formatter_video_settings($form, &$form_state, $setti
  * Validation for width and height.
  */
 function _youtube_validate_video_width_and_height($element, &$form_state, $form) {
-
   // Check if the value is a number with an optional decimal or percentage sign, or "auto".
   if (!empty($element['#value']) && !preg_match('/^(auto|([0-9]*(\.[0-9]+)?%?))$/', $element['#value'])) {
     form_error($element, t("The value entered for @dimension is invalid. Please insert a unitless integer for pixels, a percent, or \"auto\". Note that percent and auto may not function correctly depending on the browser and doctype.", array('@dimension' => $element['#title'])));
@@ -229,7 +233,6 @@ function _youtube_validate_video_width_and_height($element, &$form_state, $form)
  * Validation for Js API Origin.
  */
 function _youtube_validate_jsapi_domain ($element, &$form_state, $form) {
-
   // Check if the value is a url with http/s and no trailing directories.
   if (!empty($element['#value']) && !preg_match('/^https?\:\/\/[a-zA-Z0-9\-\.]+\.([a-zA-Z]{2,4}){1,2}$/', $element['#value'])) {
     form_error($element, t('Please insert a valid domain in the format http://www.yourdomain.com'));
@@ -245,12 +248,11 @@ function media_youtube_file_formatter_image_view($file, $display, $langcode) {
     $wrapper = file_stream_wrapper_get_instance_by_uri($file->uri);
     $image_style = $display['settings']['image_style'];
     $valid_image_styles = image_style_options(FALSE);
-    // @TODO: If autosubmit is removed and we allow view modes that insert
-    // images in the WYSIWYG, add file->overrides handling.
+
     if (empty($image_style) || !isset($valid_image_styles[$image_style])) {
       $element = array(
         '#theme' => 'image',
-        '#path' => $wrapper->getOriginalThumbnailPath(),
+        '#path' => str_replace('http:', '', $wrapper->getLocalThumbnailPath()),
         '#alt' => isset($file->override['attributes']['alt']) ? $file->override['attributes']['alt'] : $file->filename,
       );
     }
@@ -272,6 +274,7 @@ function media_youtube_file_formatter_image_view($file, $display, $langcode) {
  */
 function media_youtube_file_formatter_image_settings($form, &$form_state, $settings) {
   $element = array();
+
   $element['image_style'] = array(
     '#title' => t('Image style'),
     '#type' => 'select',
@@ -279,5 +282,6 @@ function media_youtube_file_formatter_image_settings($form, &$form_state, $setti
     '#default_value' => $settings['image_style'],
     '#empty_option' => t('None (original image)'),
   );
+
   return $element;
 }

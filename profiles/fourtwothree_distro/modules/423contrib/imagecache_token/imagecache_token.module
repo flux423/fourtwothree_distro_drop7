@@ -156,22 +156,43 @@ function imagecache_token_tokens($type, $tokens, array $data = array(), array $o
       $type = isset($explode[0]) ? $explode[0] : FALSE;
       $attribute = isset($explode[1]) ? $explode[1] : FALSE;
 
-      // Special handling for the 'first', 'second' and 'third' tokens.
-      if (in_array($attribute, array('first', 'second', 'third'))) {
-        if ($attribute == 'first') {
-          if (!empty($data['image-field'][0]['uri'])) {
-            $output[] = image_style_url($type, $data['image-field'][0]['uri']);
-          }
+      // Special handling for the 'first', 'second', 'third', and 'last' tokens.
+      // Support for index of multi-value fields.
+      if (in_array($attribute, array('first', 'second', 'third', 'last')) || is_numeric($attribute)) {
+        switch ($attribute) {
+          case 'first':
+            $index = 0;
+            break;
+
+          case 'second':
+            $index = 1;
+            break;
+
+          case 'third':
+            $index = 2;
+            break;
+
+          case 'last':
+            $index = sizeof($data['image-field']) - 1;
+            break;
+
+          default:
+            $index = $attribute;
         }
-        elseif ($attribute == 'second') {
-          if (!empty($data['image-field'][1]['uri'])) {
-            $output[] = image_style_url($type, $data['image-field'][1]['uri']);
+
+        if (isset($data['image-field'][$index]) && !empty($data['image-field'][$index]['uri'])) {
+
+          if (isset($explode[3]) && $explode[3] === 'relative') {
+            $url  = parse_url(image_style_url($type, $data['image-field'][$index]['uri']));
+            $output[] = $url['path'];
           }
-        }
-        elseif ($attribute == 'third') {
-          if (!empty($data['image-field'][2]['uri'])) {
-            $output[] = image_style_url($type, $data['image-field'][2]['uri']);
+          else {
+            $output[] = image_style_url($type, $data['image-field'][$index]['uri']);
           }
+
+          // Generate image if does not exist.
+          $styled_uri = image_style_path($type, $data['image-field'][$index]['uri']);
+          _imagecache_token_generate_image($styled_uri, $type, $data['image-field'][$index]['uri']);
         }
 
         $replacements[$original] = implode('', $output);
@@ -180,54 +201,71 @@ function imagecache_token_tokens($type, $tokens, array $data = array(), array $o
       // Other tokens.
       else {
         foreach ($data['image-field'] as $field) {
-          if ($attribute == 'render') {
-            $output[] = theme('image_formatter', array('item' => $field, 'image_style' => $type));
-          }
-          elseif (isset($attribute) && !empty($attribute) && isset($field[$attribute])) {
-            // These attributes are for the resized image, rather than the
-            // original, so load the resized image and obtain its meta data.
-            if (in_array($attribute, array('width', 'height', 'mimetype', 'extension', 'filesize'))) {
-              $styled_uri = image_style_path($type, $field['uri']);
-              $style = image_style_load($type);
+          if (isset($attribute) && !empty($attribute)) {
 
-              // Imagecrop module support.
-              global $imagecrop_style;
-              $imagecrop_style = $type;
+            // Generate image if does not exist.
+            $styled_uri = image_style_path($type, $field['uri']);
+            _imagecache_token_generate_image($styled_uri, $type, $field['uri']);
 
-              // Create a derivative of the image for this style.
-              image_style_create_derivative($style, $field['uri'], $styled_uri);
+            switch ($attribute) {
+              case 'render':
+                $output[] = theme('image_formatter', array('item' => $field, 'image_style' => $type));
+                break;
 
-              // If the styled image's information wasn't loaded before then
-              // load it now; as this process is a little heavy, the
-              // information will be statically cached to avoid needing to
-              // reload the details for another token.
-              if (empty($images_style_data[$styled_uri])) {
-                $images_style_data[$styled_uri] = image_get_info($styled_uri);
-              }
+              case 'mimetype':
+              case 'width':
+              case 'height':
+              case 'extension':
+              case 'filesize':
+                // If the styled image's information wasn't loaded before then
+                // load it now; as this process is a little heavy, the
+                // information will be statically cached to avoid needing to
+                // reload the details for another token.
+                if (empty($images_style_data[$styled_uri])) {
+                  $images_style_data[$styled_uri] = image_get_info($styled_uri);
+                }
 
-              // Check for each supported attribute.
-              if ($attribute == 'width') {
-                $output[] = $images_style_data[$styled_uri]['width'];
-              }
-              if ($attribute == 'height') {
-                $output[] = $images_style_data[$styled_uri]['height'];
-              }
-              if ($attribute == 'mimetype') {
-                $output[] = $images_style_data[$styled_uri]['mime_type'];
-              }
-              if ($attribute == 'extension') {
-                $output[] = $images_style_data[$styled_uri]['extension'];
-              }
-              if ($attribute == 'filesize') {
-                $output[] = $images_style_data[$styled_uri]['file_size'];
-              }
-            }
-            else {
-              $output[] = $field[$attribute];
+                switch ($attribute) {
+                  case 'width':
+                    $output[] = $images_style_data[$styled_uri]['width'];
+                    break;
+
+                  case 'height':
+                    $output[] = $images_style_data[$styled_uri]['height'];
+                    break;
+
+                  case 'mimetype':
+                    $output[] = $images_style_data[$styled_uri]['mime_type'];
+                    break;
+
+                  case 'extension':
+                    $output[] = $images_style_data[$styled_uri]['extension'];
+                    break;
+
+                  case 'filesize':
+                    $output[] = $images_style_data[$styled_uri]['file_size'];
+                    break;
+                }
+                break;
+
+              case 'path':
+                if (isset($explode[2]) && $explode[2] === 'relative') {
+                  $url  = parse_url(image_style_url($type, $field['uri']));
+                  $output[] = $url['path'];
+                }
+                else {
+                  $output[] = image_style_url($type, $field['uri']);
+                }
+                break;
+
+              default:
+                if (isset($field[$attribute])) {
+                  $output[] = $field[$attribute];
+                }
             }
           }
           else {
-            $output[] = image_style_url($token, $field['uri']);
+            $output[] = image_style_url($type, $field['uri']);
           }
         }
 
@@ -250,6 +288,7 @@ function _imagegecache_token_image_attributes() {
   return array(
     'style_name' => NULL,
     'path' => NULL,
+    'path:relative' => NULL,
     'width' => NULL,
     'height' => NULL,
     'extension' => NULL,
@@ -261,6 +300,29 @@ function _imagegecache_token_image_attributes() {
     'first' => '',
     'second' => '',
     'third' => '',
+    'last' => '',
     'uri' => '',
   );
+}
+
+/**
+ * Helper function to generate image style if does not exist.
+ *
+ * @param string $styled_uri
+ *   URI for image style.
+ * @param string $type
+ *   Machine name for image style.
+ * @param string $field_uri
+ *   URI of field to be styled.
+ */
+function _imagecache_token_generate_image($styled_uri, $type, $field_uri) {
+  // Only generate the image if it doesn't already exist.
+  if (!file_exists($styled_uri)) {
+    $style = image_style_load($type);
+    // Imagecrop module support.
+    global $imagecrop_style;
+    $imagecrop_style = $type;
+    // Create a derivative of the image for this style.
+    image_style_create_derivative($style, $field_uri, $styled_uri);
+  }
 }

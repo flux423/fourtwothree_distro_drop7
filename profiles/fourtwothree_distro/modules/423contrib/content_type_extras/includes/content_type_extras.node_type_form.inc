@@ -3,9 +3,9 @@
  * Function for altering forms at admin/structure/types/manage/*.
  */
 function content_type_extras_node_type_form(&$form) {
-// Not sure what this js was for (or if it ever actually existed), but I wanted
-// to keep the code here just in case I remember why it was here. :)
-//  drupal_add_js(drupal_get_path('module', 'content_type_extras') . '/js/content_type_extras.admin.js');
+  // Not sure what this js was for (or if it ever actually existed), but I wanted
+  // to keep the code here just in case I remember why it was here. :)
+  //  drupal_add_js(drupal_get_path('module', 'content_type_extras') . '/js/content_type_extras.admin.js');
 
   // We need to set the weights of the 'Preview' button radios
   $form['submission']['node_preview']['#weight'] = 2;
@@ -15,11 +15,10 @@ function content_type_extras_node_type_form(&$form) {
   // We need to check whether the description field should be required or not.
   $form['description']['#required'] = content_type_extras_get_setting('content_type_extras_descriptions_required', $type);
 
-  // Add Preview button text option
+  // Add Preview button text option.
   $form['submission']['content_type_extras_preview_button'] = array(
     '#type'          => 'textfield',
     '#title'         => "'Preview' button value",
-    '#description'   => t(''),
     '#default_value' => content_type_extras_get_setting('content_type_extras_preview_button', $type),
     '#weight'        => $form['submission']['node_preview']['#weight'] + 1,
     '#states'        => array(
@@ -32,12 +31,11 @@ function content_type_extras_node_type_form(&$form) {
   $form['submission']['content_type_extras_save_button'] = array(
     '#type'          => 'textfield',
     '#title'         => "'Save' button value",
-    '#description'   => t(''),
     '#default_value' => content_type_extras_get_setting('content_type_extras_save_button', $type),
     '#weight'        => $form['submission']['node_preview']['#weight'] - 1,
   );
 
-  // Add the option to have a "Save and New" button added to the content type
+  // Add the option to have a "Save and New" button added to the content type.
   $form['submission']['content_type_extras_save_and_new'] = array(
     '#type'        => 'radios',
     '#title'       => "'Save and New' button",
@@ -52,7 +50,6 @@ function content_type_extras_node_type_form(&$form) {
   $form['submission']['content_type_extras_save_and_new_button'] = array(
     '#type'          => 'textfield',
     '#title'         => "'Save and New' button value",
-    '#description'   => t(''),
     '#default_value' => content_type_extras_get_setting('content_type_extras_save_and_new_button', $type),
     '#weight'        => $form['submission']['content_type_extras_save_and_new']['#weight'] + 1,
     '#states'        => array(
@@ -62,7 +59,7 @@ function content_type_extras_node_type_form(&$form) {
     ),
   );
 
-  // Add the option to have a "Save and Edit" button added to the content type
+  // Add the option to have a "Save and Edit" button added to the content type.
   $form['submission']['content_type_extras_save_and_edit'] = array(
     '#type'        => 'radios',
     '#title'       => "'Save and Edit' button",
@@ -77,7 +74,6 @@ function content_type_extras_node_type_form(&$form) {
   $form['submission']['content_type_extras_save_and_edit_button'] = array(
     '#type'          => 'textfield',
     '#title'         => "'Save and Edit' button value",
-    '#description'   => t(''),
     '#default_value' => content_type_extras_get_setting('content_type_extras_save_and_edit_button', $type),
     '#weight'        => $form['submission']['content_type_extras_save_and_edit']['#weight'] + 1,
     '#states'        => array(
@@ -85,6 +81,15 @@ function content_type_extras_node_type_form(&$form) {
         'input[name=content_type_extras_save_and_edit]' => array('value' => '1'),
       ),
     ),
+  );
+
+  $form['submission']['content_type_extras_delete_button'] = array(
+    '#type'          => 'textfield',
+    '#title'         => t("'Delete' button value"),
+    '#description'   => t('The name of the Delete button that will display on the content edit form if displayed.'),
+    '#default_value' => content_type_extras_get_setting('content_type_extras_delete_button', $type),
+    '#weight'        => $form['submission']['node_preview']['#weight'] + 5,
+    '#required'      => 1,
   );
 
   // Add the option to have a "Cancel" button added to the content type
@@ -99,9 +104,35 @@ function content_type_extras_node_type_form(&$form) {
     '#default_value' => content_type_extras_get_setting('content_type_extras_cancel', $type),
     '#weight'        => $form['submission']['node_preview']['#weight'] + 6,
   );
+  $form['submission']['content_type_extras_cancel_button'] = array(
+    '#type'    => 'textfield',
+    '#title'   => t("'Cancel' button value"),
+    '#description'   => t('The name of the Cancel button that will display on the content edit form.'),
+    '#default_value' => content_type_extras_get_setting('content_type_extras_cancel_button', $type),
+    '#weight'        => $form['submission']['node_preview']['#weight'] + 7,
+    '#states'        => array(
+      'visible' => array(
+        'input[name=content_type_extras_cancel]' => array('value' => '1'),
+      ),
+    ),
+  );
+
+  // Add the option to have the warning message appear when using the "Cancel" button
+  $form['submission']['content_type_extras_cancel_hide_warning'] = array(
+    '#type'        => 'checkbox',
+    '#title'       => 'Hide cancel button warning message',
+    '#description' => t('If checked, a javascript alert box will <strong>not</strong> display warning the user that their changes will not be saved.'),
+    '#default_value' => content_type_extras_get_setting('content_type_extras_cancel_hide_warning', $type),
+    '#weight'        => $form['submission']['content_type_extras_cancel']['#weight'] + 1,
+    '#states'        => array(
+      'visible' => array(
+        'input[name=content_type_extras_cancel]' => array('value' => '1'),
+      ),
+    ),
+  );
 
   // Set weight of help text area
-  $form['submission']['help']['#weight'] = $form['submission']['node_preview']['#weight'] + 7;
+  $form['submission']['help']['#weight'] = $form['submission']['node_preview']['#weight'] + 100;
 
   // Set 'Title field label'
   $form['submission']['title_label']['#default_value'] = content_type_extras_get_setting('title_label', $type);
@@ -127,24 +158,27 @@ function content_type_extras_node_type_form(&$form) {
     }
   }
 
-  if (module_exists('xmlsitemap')) {
-    // XML Sitemap stores its variables a little differently, so we have to adjust for it here.
-    $xmlsitemap_settings = content_type_extras_get_setting('xmlsitemap_settings', 'node_' . $type);
-    $form['xmlsitemap']['status']['#default_value'] = $xmlsitemap_settings['status'];
-    $form['xmlsitemap']['priority']['#default_value'] = $xmlsitemap_settings['priority'];
-  }
+  // A new content type is being added
+  if (empty($form['#node_type']->name)) {
+    if (module_exists('xmlsitemap')) {
+      // XML Sitemap stores its variables a little differently, so we have to adjust for it here.
+      $xmlsitemap_settings = content_type_extras_get_setting('xmlsitemap_settings', 'node_' . $type);
+      $form['xmlsitemap']['status']['#default_value'] = $xmlsitemap_settings['status'];
+      $form['xmlsitemap']['priority']['#default_value'] = $xmlsitemap_settings['priority'];
+    }
 
-  if (module_exists('scheduler')) {
-    // Scheduler stores its variables a little differently, so we have to adjust for it here.
-    $scheduler_settings = content_type_extras_get_setting('scheduler_settings', 'node_' . $type);
+    if (module_exists('scheduler')) {
+      // Scheduler stores its variables a little differently, so we have to adjust for it here.
+      $scheduler_settings = content_type_extras_get_setting('scheduler_settings', 'node_' . $type);
 
-    $form['scheduler']['publish']['scheduler_publish_enable']['#default_value'] = $scheduler_settings['publish_enable'];
-    $form['scheduler']['publish']['scheduler_publish_touch']['#default_value'] = $scheduler_settings['publish_touch'];
-    $form['scheduler']['publish']['scheduler_publish_require']['#default_value'] = $scheduler_settings['publish_require'];
-    $form['scheduler']['publish']['scheduler_publish_revision']['#default_value'] = $scheduler_settings['publish_revision'];
-    $form['scheduler']['unpublish']['scheduler_unpublish_enable']['#default_value'] = $scheduler_settings['unpublish_enable'];
-    $form['scheduler']['unpublish']['scheduler_unpublish_require']['#default_value'] = $scheduler_settings['unpublish_require'];
-    $form['scheduler']['unpublish']['scheduler_unpublish_revision']['#default_value'] = $scheduler_settings['unpublish_revision'];
+      $form['scheduler']['publish']['scheduler_publish_enable']['#default_value'] = $scheduler_settings['publish_enable'];
+      $form['scheduler']['publish']['scheduler_publish_touch']['#default_value'] = $scheduler_settings['publish_touch'];
+      $form['scheduler']['publish']['scheduler_publish_require']['#default_value'] = $scheduler_settings['publish_require'];
+      $form['scheduler']['publish']['scheduler_publish_revision']['#default_value'] = $scheduler_settings['publish_revision'];
+      $form['scheduler']['unpublish']['scheduler_unpublish_enable']['#default_value'] = $scheduler_settings['unpublish_enable'];
+      $form['scheduler']['unpublish']['scheduler_unpublish_require']['#default_value'] = $scheduler_settings['unpublish_require'];
+      $form['scheduler']['unpublish']['scheduler_unpublish_revision']['#default_value'] = $scheduler_settings['unpublish_revision'];
+    }
   }
 
   // Get all available user roles
@@ -174,11 +208,11 @@ function content_type_extras_node_type_form(&$form) {
 
     $selected_perms = content_type_extras_get_selected_roles($user_permissions);
 
-    $create_roles = $selected_perms['create_roles'];
-    $edit_roles   = $selected_perms['edit_roles'];
-    $edit_own_roles   = $selected_perms['edit_own_roles'];
-    $delete_roles = $selected_perms['delete_roles'];
-    $delete_own_roles = $selected_perms['delete_own_roles'];
+    $create_roles = isset($selected_perms['create_roles']) ? $selected_perms['create_roles'] : array();
+    $edit_roles = isset($selected_perms['edit_roles']) ? $selected_perms['edit_roles'] : array();
+    $edit_own_roles = isset($selected_perms['edit_own_roles']) ? $selected_perms['edit_own_roles'] : array();
+    $delete_roles = isset($selected_perms['delete_roles']) ? $selected_perms['delete_roles'] : array();
+    $delete_own_roles = isset($selected_perms['delete_own_roles']) ? $selected_perms['delete_own_roles'] : array();
   }
 
   $permission_select = content_type_extras_get_default('content_type_extras_user_permissions_select');
@@ -216,7 +250,7 @@ function content_type_extras_node_type_form(&$form) {
         '#options'       => $roles,
         '#default_value' => array_keys($delete_roles),
       ),
-        'delete_own_roles' => array(
+      'delete_own_roles' => array(
         '#type'          => 'checkboxes',
         '#title'         => t('Roles that can DELETE own content of this type'),
         '#options'       => $roles,

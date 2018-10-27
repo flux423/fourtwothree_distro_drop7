@@ -22,7 +22,7 @@ function apps_server_local($server) {
     // is this server.
     if (isset($info->info['apps']) && (!isset($info->info['apps']['server']) || $info->info['apps']['server'] == $server['name'])) {
       $manifest = $info->info['apps'];
-      $app_path = drupal_get_path('module', $module);
+      $app_path = drupal_get_path('module', $module, FALSE);
 
       // Set some defaults, if needed.
       $manifest['machine_name'] = $module;
@@ -227,7 +227,7 @@ function apps_request_manifest($server) {
   $info = drupal_parse_info_file(dirname(__FILE__) . '/apps.info');
   $rest_data = array(
     'client_id' => apps_client_id(),
-    'apps_version' => $info['version'],
+    'apps_version' => isset($info['version']) ? $info['version'] : NULL,
     'format' => 'json',
   ) + $server;
 
@@ -284,8 +284,7 @@ function apps_request_manifest($server) {
 function apps_request_manifest_image_process(&$manifest) {
   foreach ($manifest['apps'] as $id => &$app) {
     if (isset($app['logo'])) {
-      $logo = apps_retrieve_app_image($id, $app['logo'], t("@name Logo", array('@name' => $app['name'])));
-      $app['logo'] = !empty($logo) ? $logo : FALSE;
+      $app['logo'] = apps_retrieve_app_image($id, $app['logo'], t("@name Logo", array('@name' => $app['name'])));
     }
 
     if (isset($app['screenshots'])) {
@@ -380,6 +379,10 @@ function apps_retrieve_app_image($app, $url, $title = '', $alt = '') {
     $file = new stdClass();
     $file->filemime = $request->headers['content-type'];
     $file->uri = file_unmanaged_save_data($request->data, $uri, FILE_EXISTS_REPLACE);
+    if (empty($file->uri)) {
+      watchdog('apps', 'unable to save to @file', array('@file' => $uri));
+      return FALSE;
+    }
     if ($current) {
       $file->fid = $current->fid;
     }
@@ -424,7 +427,7 @@ function apps_manifest($server) {
     $apps = array();
     foreach ($manifest['apps'] as $machine_name => $app) {
       $current_app_module = isset($modules[$machine_name]) ? $modules[$machine_name] : FALSE;
-      $app_info = isset($modules[$machine_name]) ? drupal_parse_info_file(drupal_get_path('module', $machine_name) . '/' . APPS_APP_INFO) : array();
+      $app_info = isset($modules[$machine_name]) ? drupal_parse_info_file(drupal_get_path('module', $machine_name, FALSE) . '/' . APPS_APP_INFO) : array();
       $app['enabled'] = $current_app_module && $current_app_module->status;
       $app['incompatible'] = FALSE;
       $app['installed'] = (bool) $current_app_module;
@@ -522,8 +525,18 @@ function apps_add_app_info(&$apps) {
   $set_cache = FALSE;
   foreach ($apps as $id => $app) {
     if (!isset($info[$app['machine_name']])) {
-       $info[$app['machine_name']] = ($i = module_invoke($app['machine_name'], 'apps_app_info')) ? $i : array();
-       $set_cache = TRUE;
+      $info[$app['machine_name']] = array();
+      // Check if app is local.
+      $module_cache = system_rebuild_module_data();
+      if (isset($module_cache[$app['machine_name']])) {
+        if (!module_exists($app['machine_name'])) {
+          // Module is in the codebase but not installed.
+          module_load_include('module', $app['machine_name']);
+          module_load_include('app.inc', $app['machine_name']);
+        }
+        $info[$app['machine_name']] = ($i = module_invoke($app['machine_name'], 'apps_app_info')) ? $i : array();
+      }
+      $set_cache = TRUE;
     }
     $apps[$id] += $info[$app['machine_name']];
     // Add defaults

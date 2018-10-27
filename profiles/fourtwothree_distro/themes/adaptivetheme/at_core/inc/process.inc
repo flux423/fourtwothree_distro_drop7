@@ -88,6 +88,10 @@ function adaptivetheme_process_page(&$vars) {
       // Remove the frontpage title if set in theme settings
       if (at_get_setting('frontpage_remove_title') === 1 && $vars['is_front'] === TRUE) {
         $vars['title'] = '';
+        drupal_set_title('');
+        if (isset($vars['node'])) {
+          $vars['node']->title = '';
+        }
       }
     }
   }

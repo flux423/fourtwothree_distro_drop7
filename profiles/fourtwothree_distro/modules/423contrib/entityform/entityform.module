@@ -34,11 +34,11 @@ function entityform_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 100,
   );
-  // @todo Add another config form to set whether to show preview form
+  // @todo Add another config form to set whether to show preview form.
   $items["$manage_path/preview"] = array(
     'title' => 'Form Preview',
-    'page callback' => 'entityform_form_wrapper',
-    'page arguments' => array($path_count - 1, 'submit', 'preview'),
+    'page callback' => 'entityform_form_wrapper_preview',
+    'page arguments' => array($path_count - 1),
     'access arguments' => array('administer entityform types'),
     'file' => 'entityform.admin.inc',
     'file path' => drupal_get_path('module', 'entityform'),
@@ -57,7 +57,7 @@ function entityform_menu() {
 }
 
 /**
- * Implement hook_entity_info().
+ * Implements hook_entity_info().
  *
  * We define two entities here - the actual entity that will hold our domain
  * specific information and an entity that holds information about the different
@@ -213,18 +213,18 @@ function entityform_permission() {
   return $permissions;
 }
 
-
 /**
  * Determines whether the given user has access to a entityform.
  *
- * @param $op
+ * @param string $op
  *   The operation being performed. One of 'view', 'update', 'create', 'delete'
  *   or just 'edit' (being the same as 'create' or 'update').
- * @param $entityform
- *   Optionally a entityform or a entityform type to check access for. If nothing is
- *   given, access for all entityforms is determined.
- * @param $account
+ * @param Entityform|EntityformType $entityform
+ *   Optionally a entityform or a entityform type to check access for. If
+ *   nothing is given, access for all entityforms is determined.
+ * @param object $account
  *   The user to check for. Leave it to NULL to check for the global user.
+ *
  * @return boolean
  *   Whether access is allowed or not.
  */
@@ -247,41 +247,42 @@ function entityform_access($op, $entityform = NULL, $account = NULL) {
     }
     $entityform_type = entityform_type_load($type_name);
   }
-  // Convert ops - For instance if user_access is called by VBO with 'update any entityform"
+  // Convert ops - For instance if user_access is called by VBO with
+  // 'update any entityform'.
   switch ($op) {
     case 'update':
       $op = 'edit';
       break;
+
     case 'create':
       $op = 'submit';
       break;
   }
 
   if ($op == 'submit' || $op == 'confirm') {
-    if (isset($entityform_type) && is_object($entityform_type) && is_array($entityform_type->data) && array_intersect($entityform_type->data['roles'], array_keys($user->roles))) {
+    if (isset($entityform_type) && is_object($entityform_type) && is_array($entityform_type->data) && array_intersect($entityform_type->data['roles'], array_keys($account->roles))) {
       $can_submit = TRUE;
     }
     else {
       $can_submit = FALSE;
     }
     if ($op == 'submit') {
-      if (!isset($entityform_type->data['form_status']) || $entityform_type->data['form_status'] != ENTITYFORM_STATUS_CLOSED) {
-        $access = $can_submit;
-      }
-      else {
-        $access = FALSE;
-      }
+      $access = $can_submit;
     }
     else {
-      //confirm page
-      $entityform_id = $_GET['entityform_id'];
+      // Confirm page.
+      $entityform_id = isset($_GET['entityform_id']) ? $_GET['entityform_id'] : NULL;
+      if (empty($entityform_id)) {
+        return FALSE;
+      }
       if (user_is_anonymous()) {
-        // If this is anonymous user then entityform_id should be stored in session
+        // If this is anonymous user then entityform_id should be stored
+        // in session.
         if (!isset($_SESSION['entityform_submission'])) {
           $access = FALSE;
         }
         else {
-          // Submission was stored in sesssion. Make sure it matches.
+          // Submission was stored in session. Make sure it matches.
           $match = $_SESSION['entityform_submission'] == $entityform_id;
           unset($_SESSION['entityform_submission']);
           $access = $match;
@@ -289,12 +290,12 @@ function entityform_access($op, $entityform = NULL, $account = NULL) {
       }
       else {
         if (!$entityform = entityform_load($entityform_id)) {
-          // entityform didn't load. It may have been deleted.
+          // Entityform didn't load. It may have been deleted.
           $access = FALSE;
         }
         else {
-          //only grant access if this is the user who made the submission
-          $access = $entityform->uid == $user->uid;
+          // Only grant access if this is the user who made the submission.
+          $access = $entityform->uid == $account->uid;
         }
       }
     }
@@ -304,21 +305,24 @@ function entityform_access($op, $entityform = NULL, $account = NULL) {
       if (user_access("$op any entityform", $account)) {
         $access = TRUE;
       }
-      elseif (!empty($user->uid) && $entityform->uid == $user->uid && user_access("$op own entityform", $account)) {
+      elseif (!empty($account->uid) && $entityform->uid == $account->uid && user_access("$op own entityform", $account)) {
         $access = TRUE;
       }
     }
   }
-  // If $access set then set to FALSE
+
+  // If $access set then set to FALSE.
   if ($access === NULL) {
     $access = FALSE;
   }
+
   // Allow other modules to change access.
   $context = array(
     'entityform' => $entityform,
     'account' => $account,
   );
   drupal_alter('entityform_access', $access, $op, $context);
+
   return $access;
 }
 
@@ -497,15 +501,15 @@ function entityform_user_submitted($type, $uid = NULL) {
 /**
  * Menu argument loader; Load a entityform type by string.
  *
- * @param $type
+ * @param $type_name
  *   The machine-readable name of a entityform type to load.
  * @return
- *   A entityform type array or FALSE if $type does not exist.
+ *   A entityform_type entity or FALSE if $type does not exist.
  */
-function entityform_type_load($type) {
-  $type = str_replace('-', '_', $type);
-  $types = entityform_get_types();
-  return isset($types[$type]) ? $types[$type] : FALSE;
+function entityform_type_load($type_name) {
+  $type_name = str_replace('-', '_', $type_name);
+  $entityform_type = entityform_get_types($type_name);
+  return isset($entityform_type) ? $entityform_type : FALSE;
 }
 
 
@@ -681,7 +685,7 @@ function entityform_views_api() {
 
 
 /**
- * Implement hook_theme().
+ * Implements hook_theme().
  */
 function entityform_theme() {
   return array(
@@ -693,14 +697,14 @@ function entityform_theme() {
       'render element' => 'elements',
       'template' => 'entityform',
     ),
-    'entityform_submittd_data' => array(
+    'entityform_submitted_data' => array(
       'render element' => 'elements',
-      'template' => 'entityform-submittd-data',
+      'template' => 'entityform-submitted-data',
     ),
   );
 }
 
-function template_preprocess_entityform_submittd_data(&$variables) {
+function template_preprocess_entityform_submitted_data(&$variables) {
   $entityform = $variables['entityform'];
 
   $variables['date'] = format_date($entityform->created);
@@ -744,7 +748,10 @@ function entityform_draft_page($entityform_type) {
  * Page callback
  */
 function entityform_confirm_page($entityform_type) {
-  $entityform_id = $_GET['entityform_id'];
+  $entityform_id = isset($_GET['entityform_id']) ? $_GET['entityform_id'] : NULL;
+  if (empty($entityform_id)) {
+    return array();
+  }
   $entityform = entityform_load($entityform_id);
   $render_array = array(
     'submit_text' => array(
@@ -934,7 +941,7 @@ function entityform_submission_page($entityform_type, $show_display_id = NULL, $
 
   // Remove master display.
   array_shift($display_ids);
-  $links = '';
+  $links = array();
   // Create links to other displays
   foreach ($display_ids as $display_id) {
     // Make sure this display is enabled
@@ -1282,9 +1289,8 @@ class EntityformController extends EntityAPIController {
     if (empty($type)) {
       return NULL;
     }
-    // Add values that are specific to our Entityform
+    // Add values that are specific to our Entityform.
     $values += array(
-      'entityform_id' => '',
       'is_new' => TRUE,
       'title' => '',
       'created' => '',

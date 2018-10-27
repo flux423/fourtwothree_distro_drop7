@@ -46,7 +46,6 @@ abstract class RulesDataProcessor {
     return $this->access() && (!isset($this->processor) || $this->processor->editAccess());
   }
 
-
   /**
    * Prepares the processor for parameters.
    *
@@ -98,7 +97,9 @@ abstract class RulesDataProcessor {
 
     if (!isset($items[$hook]['all'])) {
       $items[$hook]['all'] = rules_fetch_data($hook);
-      uasort($items[$hook]['all'], array(__CLASS__, '_item_sort'));
+      if (isset($items[$hook]['all'])) {
+        uasort($items[$hook]['all'], array(__CLASS__, '_item_sort'));
+      }
     }
     // Data processing isn't supported for multiple types.
     if (isset($param_info) && is_array($param_info['type'])) {
@@ -193,6 +194,7 @@ abstract class RulesDataProcessor {
    *   The rules evaluation state.
    * @param $element RulesPlugin
    *   The element for which we process the value.
+   *
    * @return
    *   The processed value.
    */
@@ -219,6 +221,7 @@ abstract class RulesDataProcessor {
   protected static function form($settings, $var_info) {
     return array();
   }
+
 }
 
 
@@ -266,7 +269,7 @@ abstract class RulesDataInputEvaluator extends RulesDataProcessor {
   }
 
   /**
-   * Overriden to prepare input evaluator processors. The setting is expected
+   * Overridden to prepare input evaluator processors. The setting is expected
    * to be the input value to be evaluated later on and is replaced by the
    * suiting processor.
    */
@@ -284,7 +287,7 @@ abstract class RulesDataInputEvaluator extends RulesDataProcessor {
   }
 
   /**
-   * Overriden to just attach the help() of evaluators.
+   * Overridden to just attach the help() of evaluators.
    */
   public static function attachForm(&$form, $settings, $param_info, $var_info, $access_check = TRUE) {
     foreach (self::evaluators($param_info, $access_check) as $name => $info) {
@@ -310,7 +313,7 @@ abstract class RulesDataInputEvaluator extends RulesDataProcessor {
   }
 
   /**
-   * Prepares the evalution, e.g. to determine whether the input evaluator has
+   * Prepares the evaluation, e.g. to determine whether the input evaluator has
    * been used. If this evaluator should be skipped just unset $this->setting.
    *
    * @param $text

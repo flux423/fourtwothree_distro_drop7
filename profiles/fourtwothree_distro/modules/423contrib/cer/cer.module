@@ -78,7 +78,11 @@ function cer_permission() {
 /**
  * Implements hook_field_delete_instance().
  */
-function cer_field_delete_instance(array $instance) {
+function cer_field_delete_instance($instance) {
+  if (!is_array($instance)) {
+    return;
+  }
+
   // Delete every CER preset which refers to the deleted field instance.
   $filter = $instance['entity_type'] . ':' . $instance['bundle'] . ':' . $instance['field_name'];
 

@@ -1,6 +1,4 @@
 <?php
-// $Id: adminrole.install,v 1.1.2.6 2010/08/14 18:05:56 davereid Exp $
-
 /**
  * @file
  * Install, update and uninstall functions for the adminrole module.

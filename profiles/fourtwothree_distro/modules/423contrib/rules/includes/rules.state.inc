@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file Contains the state and data related stuff.
+ * @file
+ * Contains the state and data related stuff.
  */
 
 /**
@@ -236,7 +237,7 @@ class RulesState {
   /**
    * Merges the info about to be saved variables form the given state into the
    * existing state. Therefor we can aggregate saves from invoked components.
-   * Merged in saves are removed from the given state, but not mergable saves
+   * Merged in saves are removed from the given state, but not mergeable saves
    * remain there.
    *
    * @param $state
@@ -291,7 +292,7 @@ class RulesState {
     try {
       foreach (explode(':', $parts[1]) as $name) {
         if ($wrapper instanceof EntityListWrapper || $wrapper instanceof EntityStructureWrapper) {
-          // Make sure we are usign the right language. Wrappers might be cached
+          // Make sure we are using the right language. Wrappers might be cached
           // and have previous langcodes set, so always set the right language.
           if ($wrapper instanceof EntityStructureWrapper) {
             $wrapper->language($langcode);
@@ -350,12 +351,13 @@ class RulesState {
     );
     return isset($key) ? $vars[$key] : $vars;
   }
+
 }
 
 /**
  * A class holding static methods related to data.
  */
-class RulesData  {
+class RulesData {
 
   /**
    * Returns whether the type match. They match if type1 is compatible to type2.
@@ -585,7 +587,8 @@ class RulesData  {
         $property_info['properties'][$key]['rules assertion'] = $assertion[$key];
         $property_info['properties'][$key]['property info alter'] = array('RulesData', 'applyMetadataAssertions');
 
-        // Apply any 'type' and 'bundle' assertion directly to the propertyinfo.
+        // Apply any 'type' and 'bundle' assertion directly to the property
+        // info.
         if (isset($assertion[$key]['#info']['type'])) {
           $type = $assertion[$key]['#info']['type'];
           // Support asserting a type in case of generic entity references only.
@@ -621,6 +624,7 @@ class RulesData  {
     // have specified further metadata.
     return RulesData::applyMetadataAssertions($wrapper, $property_info);
   }
+
 }
 
 /**
@@ -721,7 +725,7 @@ abstract class RulesIdentifiableDataWrapper extends EntityStructureWrapper {
   }
 
   /**
-   * Prepare for serializiation.
+   * Prepare for serialization.
    */
   public function __sleep() {
     $vars = parent::__sleep();
@@ -755,6 +759,7 @@ abstract class RulesIdentifiableDataWrapper extends EntityStructureWrapper {
    *   The loaded data object, or FALSE if loading failed.
    */
   abstract protected function load($id);
+
 }
 
 /**
@@ -766,4 +771,5 @@ interface RulesDataWrapperSavableInterface {
    * Save the currently wrapped data.
    */
   public function save();
+
 }

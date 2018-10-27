@@ -5,6 +5,7 @@
  * Contains rules integration for the php module needed during evaluation.
  *
  * @addtogroup rules
+ *
  * @{
  */
 
@@ -13,8 +14,8 @@
  */
 class RulesPHPEvaluator extends RulesDataInputEvaluator {
 
-  public static function access() {
-    return user_access('use PHP for settings');
+  public function editAccess() {
+    return parent::editAccess() && (user_access('use PHP for settings') || drupal_is_cli());
   }
 
   public static function getUsedVars($text, $var_info) {
@@ -58,6 +59,7 @@ class RulesPHPEvaluator extends RulesDataInputEvaluator {
 
     return $render;
   }
+
 }
 
 /**
@@ -84,14 +86,15 @@ class RulesPHPDataProcessor extends RulesDataProcessor {
     return $form;
   }
 
-  public static function access() {
-    return user_access('use PHP for settings');
+  public function editAccess() {
+    return parent::editAccess() && (user_access('use PHP for settings') || drupal_is_cli());
   }
 
   public function process($value, $info, RulesState $state, RulesPlugin $element) {
     $value = isset($this->processor) ? $this->processor->process($value, $info, $state, $element) : $value;
     return rules_php_eval_return($this->setting['code'], array('value' => $value));
   }
+
 }
 
 /**
@@ -108,7 +111,7 @@ function rules_execute_php_eval($code, $settings, $state, $element) {
 }
 
 /**
- * Evalutes the given PHP code, with the given variables defined.
+ * Evaluates the given PHP code, with the given variables defined.
  *
  * @param $code
  *   The PHP code to run, with <?php ?>
@@ -122,7 +125,7 @@ function rules_php_eval($code, $arguments = array()) {
   extract($arguments);
 
   ob_start();
-  print eval('?>'. $code);
+  print eval('?>' . $code);
   $output = ob_get_contents();
   ob_end_clean();
 
@@ -130,13 +133,13 @@ function rules_php_eval($code, $arguments = array()) {
 }
 
 /**
- * Evalutes the given PHP code, with the given variables defined. This is like
+ * Evaluates the given PHP code, with the given variables defined. This is like
  * rules_php_eval() but does return the returned data from the PHP code.
  *
  * @param $code
  *   The PHP code to run, without <?php ?>
  * @param $arguments
- * Array containing variables to be extracted to the code.
+ *   Array containing variables to be extracted to the code.
  *
  * @return
  *   The return value of the evaled code.

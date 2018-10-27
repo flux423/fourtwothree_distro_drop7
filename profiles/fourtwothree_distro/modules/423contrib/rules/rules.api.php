@@ -7,7 +7,6 @@
  * Drupal manner.
  */
 
-
 /**
  * @defgroup rules Rules module integrations.
  *
@@ -133,10 +132,10 @@
  *  The callback implementations for those interfaces may reside in any file
  *  specified in hook_rules_file_info().
  *
- *  @see hook_rules_file_info()
- *  @see rules_action_execution_callback()
- *  @see hook_rules_plugin_info()
- *  @see RulesPluginImplInterface
+ * @see hook_rules_file_info()
+ * @see rules_action_execution_callback()
+ * @see hook_rules_plugin_info()
+ * @see RulesPluginImplInterface
  */
 function hook_rules_action_info() {
   return array(
@@ -176,7 +175,7 @@ function hook_rules_action_info() {
  *   - label: The label of the category. Start capitalized. Required.
  *   - weight: (optional) A weight for sorting the category. Defaults to 0.
  *   - equals group: (optional) For BC, categories may be defined that equal
- *     a previsouly used 'group'.
+ *     a previously used 'group'.
  *   - icon: (optional) The file path of an icon to use, relative to the module
  *     or specified icon path. The icon should be a transparent SVG containing
  *     no colors (only #fff). See https://drupal.org/node/2090265 for
@@ -259,10 +258,11 @@ function hook_rules_directory() {
  *   The callback gets arguments passed as described as parameter in
  *   hook_rules_action_info() as well as an array containing the action's
  *   configuration settings.
+ *
  * @return
- *   The action may return an array containg parameter or provided variables
+ *   The action may return an array containing parameter or provided variables
  *   with their names as key. This is used update the value of a parameter or to
- *   provdide the value for a provided variable.
+ *   provide the value for a provided variable.
  *   Apart from that any parameters which have the key 'save' set to TRUE will
  *   be remembered to be saved by rules unless the action returns FALSE.
  *   Conditions have to return a boolean value in any case.
@@ -364,7 +364,7 @@ function hook_rules_condition_info() {
  *       Note that for lazy-loading entities just the entity id may be passed
  *       as variable value, so a handler is not necessary in that case.
  *
- *  @see rules_invoke_event()
+ * @see rules_invoke_event()
  */
 function hook_rules_event_info() {
   $items = array(
@@ -413,7 +413,6 @@ function hook_rules_event_info() {
  * module.
  * For a list of data types defined by rules see rules_rules_core_data_info().
  *
- *
  * @return
  *   An array of information about the module's provided data types. The array
  *   contains a sub-array for each data type, with the data type name as the
@@ -446,7 +445,7 @@ function hook_rules_event_info() {
  *     makes use of the class for wrapping the data of the given type. However
  *     note that if data is already wrapped when it is passed to Rules, the
  *     existing wrappers will be kept.
- *     For modules implementing identifiable data types being non-entites the
+ *     For modules implementing identifiable data types being non-entities the
  *     class RulesIdentifiableDataWrapper is provided, which can be used as base
  *     for a custom wrapper class. See RulesIdentifiableDataWrapper for details.
  *   - property info: (optional) May be used for non-entity data structures to
@@ -470,9 +469,9 @@ function hook_rules_event_info() {
  *   - cleaning callback: (optional) A callback that input evaluators may use
  *     to clean inserted replacements; e.g. this is used by the token evaluator.
  *
- *  @see entity_metadata_wrapper()
- *  @see hook_rules_data_info_alter()
- *  @see rules_rules_core_data_info()
+ * @see entity_metadata_wrapper()
+ * @see hook_rules_data_info_alter()
+ * @see rules_rules_core_data_info()
  */
 function hook_rules_data_info() {
   return array(
@@ -543,8 +542,8 @@ function hook_rules_data_info() {
  *     of the 'or' plugin. Note that only uppercase values are allowed, as
  *     lower case values are treated as action or condition exports.
  *
- *  @see class RulesPlugin
- *  @see hook_rules_plugin_info_alter()
+ * @see class RulesPlugin
+ * @see hook_rules_plugin_info_alter()
  */
 function hook_rules_plugin_info() {
   return array(
@@ -597,8 +596,8 @@ function hook_rules_plugin_info() {
  *     used. Defaults to 'text'. Multiple data types may be specified using an
  *     array.
  *
- *  @see class RulesDataInputEvaluator
- *  @see hook_rules_evaluator_info_alter()
+ * @see class RulesDataInputEvaluator
+ * @see hook_rules_evaluator_info_alter()
  */
 function hook_rules_evaluator_info() {
   return array(
@@ -606,7 +605,7 @@ function hook_rules_evaluator_info() {
       'class' => 'RulesTokenEvaluator',
       'type' => array('text', 'uri'),
       'weight' => 0,
-     ),
+    ),
   );
 }
 
@@ -636,8 +635,8 @@ function hook_rules_evaluator_info() {
  *     used. Defaults to 'text'. Multiple data types may be specified using an
  *     array.
  *
- *  @see class RulesDataProcessor
- *  @see hook_rules_data_processor_info_alter()
+ * @see class RulesDataProcessor
+ * @see hook_rules_data_processor_info_alter()
  */
 function hook_rules_data_processor_info() {
   return array(
@@ -661,7 +660,7 @@ function hook_rules_data_processor_info() {
  * @see hook_rules_action_info().
  */
 function hook_rules_action_info_alter(&$actions) {
-  // The rules action is more powerful, so hide the core action
+  // The rules action is more powerful, so hide the core action.
   unset($actions['rules_core_node_assign_owner_action']);
   // We prefer handling saving by rules - not by the user.
   unset($actions['rules_core_node_save_action']);
@@ -866,6 +865,8 @@ function hook_rules_config_execute($config) {
 function hook_default_rules_configuration() {
   $rule = rules_reaction_rule();
   $rule->label = 'example default rule';
+  // Add rules tags.
+  $rule->tags = array('Admin', 'Tag2');
   $rule->active = FALSE;
   $rule->event('node_update')
        ->condition(rules_condition('data_is', array('data:select' => 'node:status', 'value' => TRUE))->negate())
@@ -873,6 +874,7 @@ function hook_default_rules_configuration() {
        ->action('drupal_message', array('message' => 'A node has been updated.'));
 
   $configs['rules_test_default_1'] = $rule;
+
   return $configs;
 }
 
@@ -982,6 +984,7 @@ function hook_rules_event_set_alter($event_name, RulesEventSet $event_set) {
  * @param $element
  *   The element array of a configured condition or action which is to be
  *   upgraded.
+ *
  * @return
  *   The name of the action or condition which should be used.
  */
@@ -996,7 +999,7 @@ function hook_rules_action_base_upgrade_map_name($element) {
  * care of upgrading the configuration of all known parameters, which only works
  * if the parameter name has not changed.
  * If something changed, this callback can be used to properly apply the
- * configruation of the Drupal 6 action ($element) to the Drupal 7 version
+ * configuration of the Drupal 6 action ($element) to the Drupal 7 version
  * ($target).
  *
  * This is no real hook, but a callback that is invoked for each Drupal 6
@@ -1077,7 +1080,8 @@ function hook_rules_ui_menu_alter(&$items, $base_path, $base_count) {
  * @param $account
  *   (optional) The user to check for. If no account is passed, access is
  *   determined for the current user.
- * @return boolean
+ *
+ * @return bool
  *   Return TRUE to grant access, FALSE to explicitly deny access. Return NULL
  *   or nothing to not affect the operation.
  *   Access is granted as soon as a module grants access and no one denies

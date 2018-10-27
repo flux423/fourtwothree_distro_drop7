@@ -1,3 +1,155 @@
+7.x-1.57, 2018-10-18
+-------------------
+- No changes since last release.
+
+7.x-1.56, 2018-10-10
+-------------------
+- Update to search_api_solr 1.14 for SA-CONTRIB-2018-065.
+
+7.x-1.55, 2018-07-04
+-------------------
+- No changes since last release.
+
+7.x-1.54, 2018-05-10
+-------------------
+- Update search_api to version 1.24.
+
+7.x-1.51, 2018-02-22
+-------------------
+- No changes since last release.
+
+7.x-1.50, 2018-02-15
+-------------------
+- No changes since last release.
+
+7.x-1.49, 2017-12-13
+-------------------
+- No changes since last release.
+
+7.x-1.48, 2017-11-30
+-------------------
+- No changes since last release.
+
+7.x-1.47, 2017-08-17
+-------------------
+- No changes since last release.
+
+7.x-1.46, 2017-06-21
+-------------------
+- Page title and H1 on search results page should give number of results for
+  accessibility.
+- Update Search API modules.
+
+7.x-1.45, 2017-05-11
+-------------------
+- No changes since last release.
+
+7.x-1.44, 2017-04-13
+-------------------
+- No changes since last release.
+
+7.x-1.43, 2017-02-22
+-------------------
+- No changes since last release.
+
+7.x-1.42, 2017-02-17
+-------------------
+- Fix tests and 'drush' installation with Drupal 7.50 and greater.
+
+Panopoly Search 7.x-1.41, 2016-11-17
+-----------------------------
+- SolrPhpClient cannot be downloaded.
+
+Panopoly Search 7.x-1.40, 2016-08-20
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.39, 2016-08-18
+-----------------------------
+- Update Panels and Panelizer for SA-CONTRIB-2016-047 and SA-CONTRIB-2016-048.
+
+Panopoly Search 7.x-1.38, 2016-08-03
+-----------------------------
+- Don't enable pantheon_apachesolr on panopoly sites hosted on Pantheon by
+  default.
+
+Panopoly Search 7.x-1.37, 2016-06-16
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.36, 2016-06-16
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.35, 2016-05-04
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.34, 2016-04-20
+-----------------------------
+- Update to search_api 1.18 for SA-CONTRIB-2016-022.
+- Update search_api to 1.17, search_api_db to 1.5, search_api_solr to 1.10.
+
+Panopoly Search 7.x-1.33, 2016-04-14
+-----------------------------
+- Don't log searches for empty keywords.
+
+Panopoly Search 7.x-1.32, 2016-03-03
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.31, 2016-02-25
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.30, 2016-01-06
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.29, 2015-11-18
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.28, 2015-10-21
+-----------------------------
+- Search block pane config ignores prompt override.
+- Performance issues when indexing HTML-heavy sites.
+
+Panopoly Search 7.x-1.27, 2015-09-02
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.26, 2015-08-19
+-----------------------------
+- Have panopoly_search SOLR intergration configured for node access by default.
+- Search indexes source code.
+- Update search_api to 1.15 and search_api_solr to 1.7.
+- Redirect search block to our search_api-based search.
+- Update from Panopoly 1.15 or older fails with "Table 'drupal.search_api_task'
+  doesn't exist".
+- Check if panopoly_search is enabled in panopoly_search update 7005.
+- Exported disabled server "Solr Server" cannot have an index attached.
+
+Panopoly Search 7.x-1.25, 2015-07-08
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.24, 2015-07-02
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.23, 2015-06-17
+-----------------------------
+- No changes since last release.
+
+Panopoly Search 7.x-1.22, 2015-06-04
+-----------------------------
+- Alter Search Form Submit.
+
+Panopoly Search 7.x-1.21, 2015-04-29
+-----------------------------
+- Update Features module to version 2.5.
+
 Panopoly Search 7.x-1.20, 2015-03-25
 -----------------------------
 - CHANGELOG.txt updates for 1.19 went wrong.

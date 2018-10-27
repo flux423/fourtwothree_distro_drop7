@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file Extendable Object Faces API. Provided by the faces module.
+ * @file
+ * Extendable Object Faces API. Provided by the faces module.
  */
 
 if (!interface_exists('FacesExtenderInterface', FALSE)) {
@@ -14,12 +15,13 @@ if (!interface_exists('FacesExtenderInterface', FALSE)) {
     /**
      * Constructs an instance of the extender.
      */
-    function __construct(FacesExtendable $object);
+    public function __construct(FacesExtendable $object);
 
     /**
      * Returns the extended object.
      */
     public function getExtendable();
+
   }
 
   /**
@@ -42,8 +44,7 @@ if (!class_exists('FacesExtender', FALSE)) {
      */
     protected $object;
 
-
-    function __construct(FacesExtendable $object) {
+    public function __construct(FacesExtendable $object) {
       $this->object = $object;
     }
 
@@ -74,6 +75,7 @@ if (!class_exists('FacesExtender', FALSE)) {
     protected function call($name, array $args = array()) {
       return $this->object->call($name, $args);
     }
+
   }
 }
 
@@ -108,7 +110,7 @@ if (!class_exists('FacesExtendable', FALSE)) {
     /**
      * Magic method: Invoke the dynamically implemented methods.
      */
-    function __call($name, $arguments = array()) {
+    public function __call($name, $arguments = array()) {
       if (isset($this->facesMethods[$name])) {
         $method = $this->facesMethods[$name];
         // Include code, if necessary.
@@ -147,12 +149,13 @@ if (!class_exists('FacesExtendable', FALSE)) {
 
     /**
      * Returns whether the object can face as the given interface, thus it
-     * returns TRUE if this oject has been extended by an appropriate
+     * returns TRUE if this object has been extended by an appropriate
      * implementation.
      *
      * @param $interface
-     *   Optional. A interface to test for. If it's omitted, all interfaces that
-     *   the object can be faced as are returned.
+     *   Optional. An interface to test for. If it's omitted, all interfaces
+     *   that the object can be faced as are returned.
+     *
      * @return
      *   Whether the object can face as the interface or an array of interface
      *   names.
@@ -235,7 +238,7 @@ if (!class_exists('FacesExtendable', FALSE)) {
      * Override the implementation of an extended method.
      *
      * @param $methods
-     *   An array of methods of the interface, that should be overriden, where
+     *   An array of methods of the interface, that should be overridden, where
      *   the keys are methods to override and the values the callback functions
      *   to use.
      * @param $includes
@@ -307,5 +310,7 @@ if (!class_exists('FacesExtendable', FALSE)) {
       }
       return $this->__call($name, $args);
     }
+
   }
+
 }

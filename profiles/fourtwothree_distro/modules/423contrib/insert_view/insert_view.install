@@ -12,7 +12,7 @@ function insert_view_update_6200() {
   $ret = array();
   $ret[] = array(
     'success' => TRUE,
-    'query' => 'WARNING: If you used multiple views arguments with insert_view filter, then you will have to update those nodes manually to use the new syntax.'
+    'query' => 'WARNING: If you used multiple views arguments with insert_view filter, then you will have to update those nodes manually to use the new syntax.',
   );
   return $ret;
 }

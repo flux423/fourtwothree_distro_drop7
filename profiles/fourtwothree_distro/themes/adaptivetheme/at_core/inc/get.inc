@@ -127,9 +127,10 @@ function at_get_css_files($theme_name) {
     else {
 
       // Contrib module
-      $module_data = system_rebuild_module_data();
+      $module_data = _system_rebuild_module_data();
       foreach ($module_data as $module => $data) {
-        if ($data->status && !empty($data->info['stylesheets'])) {
+        //if ($data->status && !empty($data->info['stylesheets'])) {
+        if (module_exists($module) && !empty($data->info['stylesheets'])) {
           foreach ($data->info['stylesheets'] as $media => $content) {
             foreach ($content as $file) {
               $styles[$file] = array(

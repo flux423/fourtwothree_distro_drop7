@@ -29,7 +29,8 @@ function content_type_extras_permission() {
  * Implements hook_preprocess_page().
  */
 function content_type_extras_preprocess_page(&$vars) {
-  // We have to check for the front page first since it's setting take precedence
+  // We have to check for the front page first since it's setting
+  // take precedence.
   // over the node type setting.
   if (drupal_is_front_page()) {
     $hide_title_front = content_type_extras_get_default('content_type_extras_title_hide_front');
@@ -50,8 +51,9 @@ function content_type_extras_preprocess_page(&$vars) {
   }
 
   elseif (!empty($vars['node'])) {
-    // Ran into an issue when using the Print module where the node type isn't set, throwing an error
-    // so we are checking to see if the node type is set first
+    // Ran into an issue when using the Print module where the node type isn't
+    // set, throwing an error so we are checking to see if the node type is
+    // set first.
     $hide_title = isset($vars['node']->type) ? content_type_extras_get_setting('content_type_extras_title_hide', $vars['node']->type) : '';
     if ($hide_title) {
       $hide_title_css = content_type_extras_get_default('content_type_extras_title_hide_css');
@@ -92,11 +94,13 @@ function content_type_extras_menu() {
  * Implements hook_form_alter().
  */
 function content_type_extras_form_alter(&$form, &$form_state, $form_id) {
-  // This is a list of node form ids to omit from being processed, since they don't
+  // This is a list of node form ids to omit from being processed, since
+  // they don't.
   // play nice with content_type_extras.
   $exclude_node_form = content_type_extras_get_setting('content_type_extras_excluded_node_forms', '');
 
-  // These forms are known to cause issues so always include them in the excluded forms.
+  // These forms are known to cause issues so always include them in the
+  // excluded forms.
   $exclude_node_form[] = 'subscriptions_ui_node_form';
   $exclude_node_form[] = 'field_collection_item_form';
 
@@ -106,37 +110,39 @@ function content_type_extras_form_alter(&$form, &$form_state, $form_id) {
     content_type_extras_node_type_form($form);
   }
 
-  // Viewing a specific node edit form
+  // Viewing a specific node edit form.
   elseif (strpos($form_id, '_node_form') && !in_array($form_id, $exclude_node_form)) {
     $type = $form['type']['#value'];
 
-    // We need to check to see if auto_nodetitle module is hiding the title field - checking for $form['title']['#value'] != 'ant'
-    // Also, for compatibility with auto_entitytitle module we check for $form['title']['#value'] != '%AutoEntityLabel%'
+    // We need to check to see if auto_nodetitle module is hiding the title
+    // field - checking for $form['title']['#value'] != 'ant'. Also, for
+    // compatibility with auto_entitytitle module we check for
+    // $form['title']['#value'] != '%AutoEntityLabel%'.
     if (user_access(CONTENT_TYPE_EXTRAS_NODE_DISPLAY_PERM) &&
       (isset($form['title']['#value']) &&
         $form['title']['#value'] != 'ant' &&
         $form['title']['#value'] != '%AutoEntityLabel%')) {
-          $hide = content_type_extras_get_setting('content_type_extras_title_hide', $type);
-          if (!empty($form['nid']['#value'])) {
-            $hide = _content_type_extras_get_node_display($form['nid']['#value']);
-          }
+      $hide = content_type_extras_get_setting('content_type_extras_title_hide', $type);
+      if (!empty($form['nid']['#value'])) {
+        $hide = _content_type_extras_get_node_display($form['nid']['#value']);
+      }
 
-          $form['title_hide'] = array(
-            '#type'          => 'checkbox',
-            '#title'         => t("Exclude this node's title from display"),
-            '#default_value' => $hide,
-            '#weight'        => 0,
-          );
+      $form['title_hide'] = array(
+        '#type'          => 'checkbox',
+        '#title'         => t("Exclude this node's title from display"),
+        '#default_value' => $hide,
+        '#weight'        => 0,
+      );
 
-          if (variable_get('site_frontpage', '') . '/edit' == current_path()) {
-            // We need to get the default settings since that is the only place that
-            // the hide_title_front setting is stored.
-            $defaults = content_type_extras_get_default();
-            if (!empty($defaults['extras']['title_hide_front'])) {
-              $form['title_hide']['#disabled'] = TRUE;
-              $form['title_hide']['#description'] = t('<em>You cannot edit this option as it is set as the front page and the front page title is set to be hidden by the administrator.</em>');
-            }
-          }
+      if (variable_get('site_frontpage', '') . '/edit' == current_path()) {
+        // We need to get the default settings since that is the only place that
+        // the hide_title_front setting is stored.
+        $defaults = content_type_extras_get_default();
+        if (!empty($defaults['extras']['title_hide_front'])) {
+          $form['title_hide']['#disabled'] = TRUE;
+          $form['title_hide']['#description'] = t('<em>You cannot edit this option as it is set as the front page and the front page title is set to be hidden by the administrator.</em>');
+        }
+      }
     }
 
     $title_label = content_type_extras_get_setting('title_label', $type);
@@ -147,7 +153,7 @@ function content_type_extras_form_alter(&$form, &$form_state, $form_id) {
     $form['actions']['submit']['#value'] = content_type_extras_get_setting('content_type_extras_save_button', $type);
 
     $save_and_new = content_type_extras_get_setting('content_type_extras_save_and_new', $type);
-    if (!empty($save_and_new)) {
+    if (!empty($save_and_new) && user_access('create ' . $type . ' content')) {
       $form['actions']['save_and_new'] = array(
         '#type'   => 'submit',
         '#value'  => content_type_extras_get_setting('content_type_extras_save_and_new_button', $type),
@@ -176,14 +182,34 @@ function content_type_extras_form_alter(&$form, &$form_state, $form_id) {
     if (!empty($preview)) {
       $form['actions']['preview']['#value']  = content_type_extras_get_setting('content_type_extras_preview_button', $type);
     }
+    elseif (isset($form['actions']['preview'])) {
+      unset($form['actions']['preview']);
+    }
+
+    $form['actions']['delete']['#value'] = content_type_extras_get_setting('content_type_extras_delete_button', $type);
 
     $cancel = content_type_extras_get_setting('content_type_extras_cancel', $type);
     if (!empty($cancel)) {
-      drupal_add_js(drupal_get_path('module', 'content_type_extras') . '/js/content_type_extras.cancel_button.js');
+      $cancel_hide_warning = content_type_extras_get_setting('content_type_extras_cancel_hide_warning', $type);
+      $cancel_location = content_type_extras_get_setting('content_type_extras_cancel_button_location', $type);
+      $location_path = content_type_extras_get_setting('content_type_extras_cancel_button_location_path', $type);
+
+      $form['#attached']['js'][] = drupal_get_path('module', 'content_type_extras') . '/js/content_type_extras.cancel_button.js';
+      $form['#attached']['js'][] = array(
+        'data' => array(
+          'content_type_extras' => array(
+            'hide_warning' => $cancel_hide_warning,
+            'cancel_location' => $cancel_location,
+            'location_path' => $location_path,
+          ),
+        ),
+        'type' => 'setting',
+      );
+
       $form['actions']['cancel'] = array(
         '#type'        => 'button',
-        '#value'       => t('Cancel'),
-        '#weight'      => 100, // We want this at the end of whatever buttons are showing
+        '#value'       => content_type_extras_get_setting('content_type_extras_cancel_button', $type),
+        '#weight'      => 100, // We want this at the end of whatever buttons are showing.
         '#post_render' => array('content_type_extras_change_button_type'),
       );
     }
@@ -191,8 +217,9 @@ function content_type_extras_form_alter(&$form, &$form_state, $form_id) {
     // Add the form buttons to the top of the page
     // Based on: http://blog.urbaninsight.com/2011/09/20/editors-perspective-creating-content-drupal
     $top_buttons = content_type_extras_get_setting('content_type_extras_top_buttons', $type);
+    $top_buttons = array_filter($top_buttons);
 
-    if (!empty($top_buttons['node_edit']) || in_array('node_edit', $top_buttons)) {
+    if (in_array('node_edit', $top_buttons)) {
       $form['pre_actions'] = $form['actions'];
       $form['pre_actions']['#weight'] = -100;
     }
@@ -200,32 +227,38 @@ function content_type_extras_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = 'content_type_extras_node_form_submit';
   }
 
-  // Content type field machine names can only be a maximum of 32 characters (including 'field_')
-  // but the user can enter a name any length, getting an error message if the name is too long
-  // That drives me crazy!! This fixes that!
+  // Content type field machine names can only be a maximum of 32 characters
+  // (including 'field_') but the user can enter a name any length, getting an
+  // error message if the name is too long. That drives me crazy!!
+  // This fixes that!
   elseif ($form_id == 'field_ui_field_overview_form') {
-    $type = arg(4);
+    $type = str_replace('-', '_', arg(4));
 
     drupal_add_js(drupal_get_path('module', 'content_type_extras') . '/js/content_type_extras.manage_fields.js');
 
     $top_buttons = content_type_extras_get_setting('content_type_extras_top_buttons', $type);
-    if (!empty($top_buttons['manage_fields']) || in_array('manage_fields', $top_buttons)) {
+    $top_buttons = array_filter($top_buttons);
+
+    if (in_array('manage_fields', $top_buttons)) {
       $form['pre_actions'] = $form['actions'];
       $form['pre_actions']['#weight'] = -100;
     }
 
-    $form['fields']['_add_new_field']['field_name']['#maxlength'] = 26;
-    $form['fields']['_add_new_field']['field_name']['#description'] .= t(' - <span class="characters">26</span> characters max.');
-    // The field_group module does the same thing, so if that is enabled, handle it the same way
+    if (isset($form['fields']['_add_new_field'])) {
+      $form['fields']['_add_new_field']['field_name']['#maxlength'] = 26;
+      $form['fields']['_add_new_field']['field_name']['#description'] .= ' ' . t('- <span class="characters">26</span> characters max.');
+    }
+    // The field_group module does the same thing, so if that is enabled, handle
+    // it the same way.
     if (module_exists('field_group')) {
       $form['fields']['_add_new_group']['group_name']['#maxlength'] = 26;
-      $form['fields']['_add_new_group']['group_name']['#description'] .= t(' - <span class="characters">26</span> characters max.');
+      $form['fields']['_add_new_group']['group_name']['#description'] .= ' ' . t('- <span class="characters">26</span> characters max.');
     }
   }
 }
 
 /**
- * Form submission handler for $form_id *_node_form
+ * Form submission handler for $form_id *_node_form.
  */
 function content_type_extras_node_form_submit(&$form, &$form_state) {
   if (!empty($form_state['values']['title_hide'])) {
@@ -234,7 +267,7 @@ function content_type_extras_node_form_submit(&$form, &$form_state) {
 }
 
 /**
- * Form submission for $form_id *_node_form
+ * Form submission for $form_id *_node_form.
  */
 function content_type_extras_node_form_new_submit(&$form, &$form_state) {
   unset($_GET['destination']);
@@ -242,13 +275,20 @@ function content_type_extras_node_form_new_submit(&$form, &$form_state) {
 }
 
 /**
- * Form submission for $form_id *_node_form
+ * Form submission for $form_id *_node_form.
  */
 function content_type_extras_node_form_edit_submit(&$form, &$form_state) {
   $query_string = array();
   // Allow compatibility with content lock module.
   if (isset($_REQUEST['content_lock_token'])) {
     $query_string['content_lock_token'] = $_REQUEST['content_lock_token'];
+  }
+  // Allow compatibility with additional query parameters.
+  $query_parameters = drupal_get_query_parameters();
+  if (!empty($query_parameters)) {
+    foreach ($query_parameters as $key => $value) {
+      $query_string[$key] = $value;
+    }
   }
   if (!empty($query_string)) {
     $form_state['redirect'] = url('node/' . $form_state['values']['nid'] . '/edit',
@@ -275,7 +315,8 @@ function content_type_extras_node_type_delete($info) {
 
 /**
  * Function to change the type of button from 'submit' to 'button.
- * -- From http://drupal.org/node/133861#comment-4002698
+ *
+ * @see http://drupal.org/node/133861#comment-4002698
  */
 function content_type_extras_change_button_type($markup, $element) {
   $markup = str_replace('type="submit', 'type="button', $markup);
@@ -283,7 +324,7 @@ function content_type_extras_change_button_type($markup, $element) {
 }
 
 /**
- * Function to set values for node title display
+ * Function to set values for node title display.
  */
 function _content_type_extras_set_node_display($nid, $hide) {
   $settings = variable_get('content_type_extras_node_display', array());
@@ -292,7 +333,7 @@ function _content_type_extras_set_node_display($nid, $hide) {
 }
 
 /**
- * Function to get values for node title display
+ * Function to get values for node title display.
  */
 function _content_type_extras_get_node_display($nid) {
   $settings = variable_get('content_type_extras_node_display', array());
@@ -315,8 +356,8 @@ function _content_type_extras_get_node_display($nid) {
  *  Returns the requested setting for the given content type.
  */
 function content_type_extras_get_setting($setting, $type) {
-  // We have to handle title_label differently because it is stored in the node_type
-  // table, not in variables
+  // We have to handle title_label differently because it is stored in the
+  // node_type table, not in variables.
   if ($setting == 'title_label') {
     $result = db_query("SELECT title_label
                        FROM {node_type}
@@ -376,24 +417,30 @@ function content_type_extras_get_initial($setting = NULL) {
       'revision' => 0,
     ),
     'node_submitted' => 1,
-    // Values set by content_type_extras.module
-    'content_type_extras_save_button'             => t('Save'),
-    'content_type_extras_preview_button'          => t('Preview'),
-    'content_type_extras_save_and_new'            => 0,
-    'content_type_extras_save_and_new_button'     => t('Save and New'),
-    'content_type_extras_save_and_edit'           => 0,
-    'content_type_extras_save_and_edit_button'    => t('Save and Edit'),
-    'content_type_extras_cancel'                  => 0,
-    'content_type_extras_title_hide'              => 0,
-    'content_type_extras_title_hide_css'          => 0,
-    'content_type_extras_title_hide_front'        => 0,
-    'content_type_extras_top_buttons'             => array(),
-    'content_type_extras_remove_body'             => 0,
-    'content_type_extras_disable_token_display'   => 0,
-    'content_type_extras_descriptions_required'   => 0,
-    'content_type_extras_user_permissions_select' => 'cte',
-    'content_type_extras_excluded_node_forms'     => array(),
-    // Values set by comment.module
+    // Values set by content_type_extras.module.
+    'content_type_extras_save_button'                 => t('Save'),
+    'content_type_extras_preview_button'              => t('Preview'),
+    'content_type_extras_save_and_new'                => 0,
+    'content_type_extras_save_and_new_button'         => t('Save and New'),
+    'content_type_extras_save_and_edit'               => 0,
+    'content_type_extras_delete_button'               => t('Delete'),
+    'content_type_extras_save_and_edit_button'        => t('Save and Edit'),
+    'content_type_extras_cancel'                      => 0,
+    'content_type_extras_cancel_button'               => t('Cancel'),
+    'content_type_extras_cancel_button_location'      => 'previous',
+    'content_type_extras_cancel_button_location_path' => '',
+    'content_type_extras_cancel_hide_warning'         => 0,
+    'content_type_extras_delete_button'               => t('Delete'),
+    'content_type_extras_title_hide'                  => 0,
+    'content_type_extras_title_hide_css'              => 0,
+    'content_type_extras_title_hide_front'            => 0,
+    'content_type_extras_top_buttons'                 => array(),
+    'content_type_extras_remove_body'                 => 0,
+    'content_type_extras_disable_token_display'       => 0,
+    'content_type_extras_descriptions_required'       => 0,
+    'content_type_extras_user_permissions_select'     => 'cte',
+    'content_type_extras_excluded_node_forms'         => array(),
+    // Values set by comment.module.
     'comment' => array(
       'comment'          => 2,
       'default_mode'     => 1,
@@ -403,14 +450,14 @@ function content_type_extras_get_initial($setting = NULL) {
       'form_location'    => 1,
       'preview'          => 1,
     ),
-    // Values set by pathauto module
+    // Values set by pathauto module.
     'pathauto_node' => '',
-    // Values set by xmlsitemap.module
+    // Values set by xmlsitemap.module.
     'xmlsitemap_settings' => array(
       'status'   => 1,
       'priority' => '0.5',
     ),
-    // Values set by scheduler.module
+    // Values set by scheduler.module.
     'scheduler_settings' => array(
       'publish_enable'     => 0,
       'publish_touch'      => 0,
@@ -451,6 +498,6 @@ function content_type_extras_get_initial($setting = NULL) {
  * @TODO: I'd like to find a better way to handle this, if one exists!
  */
 function content_type_extras_node_type_form_submit_redirect(&$form, &$form_state) {
-  include_once(drupal_get_path('module', 'content_type_extras') . '/includes/content_type_extras.node_type_form.inc');
+  include_once drupal_get_path('module', 'content_type_extras') . '/includes/content_type_extras.node_type_form.inc';
   content_type_extras_node_type_form_submit($form, $form_state);
 }

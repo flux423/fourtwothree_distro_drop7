@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file Rules UI forms
+ * @file
+ * Rules User Interface forms.
  */
 
 /**
@@ -166,12 +167,16 @@ function rules_ui_confirm_operations($op, $rules_config) {
   switch ($op) {
     case 'enable':
       return array(t('Are you sure you want to enable the %plugin %label?', $vars), '');
+
     case 'disable':
       return array(t('Are you sure you want to disable the %plugin %label?', $vars), '');
+
     case 'revert':
       return array(t('Are you sure you want to revert the %plugin %label?', $vars), t('This action cannot be undone.'));
+
     case 'delete':
       return array(t('Are you sure you want to delete the %plugin %label?', $vars), t('This action cannot be undone.'));
+
     default:
       return FALSE;
   }
@@ -291,7 +296,7 @@ function rules_ui_add_element($form, &$form_state, $rules_config, $plugin_name, 
 /**
  * Add element submit callback.
  * Used for "abstract plugins" to create the initial element object with the
- * given implemenation name and rebuild the form.
+ * given implementation name and rebuild the form.
  */
 function rules_ui_add_element_submit($form, &$form_state) {
   $element = rules_plugin_factory($form_state['plugin'], $form_state['values']['element_name']);
@@ -362,7 +367,6 @@ function rules_ui_delete_element_submit($form, &$form_state) {
     $form_state['redirect'] = RulesPluginUI::defaultRedirect($form_state['element_parent']);
   }
 }
-
 
 /**
  * Configure a rule element.
@@ -487,7 +491,7 @@ function rules_ui_add_event_apply($form, &$form_state) {
 }
 
 /**
- * Form to remove a event from a rule.
+ * Form to remove an event from a rule.
  */
 function rules_ui_remove_event($form, &$form_state, $rules_config, $event, $base_path) {
   RulesPluginUI::$basePath = $base_path;
@@ -657,7 +661,6 @@ function rules_ui_form_data_selection_auto_completion($parameter, $form_build_id
   drupal_json_output($matches);
 }
 
-
 /**
  * FAPI validation of an integer element. Copy of the private function
  * _element_validate_integer().
@@ -696,7 +699,7 @@ function rules_ui_element_ip_address_validate($element, &$form_state) {
 
 /**
  * FAPI validation of a date element. Makes sure the specified date format is
- * correct and converts date values specifiy a fixed (= non relative) date to
+ * correct and converts date values specify a fixed (= non relative) date to
  * a timestamp. Relative dates are handled by the date input evaluator.
  */
 function rules_ui_element_date_validate($element, &$form_state) {
@@ -810,7 +813,6 @@ function rules_ui_element_fix_empty_after_build($element, &$form_state) {
   return $element;
 }
 
-
 /**
  * FAPI after build callback for specifying a list of values.
  *
@@ -877,6 +879,7 @@ function rules_ui_element_machine_name_validate($element, &$form_state) {
 
 /**
  * FAPI callback to validate the form for editing variable info.
+ *
  * @see RulesPluginUI::getVariableForm()
  */
 function rules_ui_element_variable_form_validate($elements, &$form_state) {

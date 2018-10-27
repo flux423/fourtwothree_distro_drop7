@@ -8,6 +8,8 @@ function cer_commerce_cer_insert(CerPreset $preset) {
   // by Product Reference fields managed by CER.
   if ($preset->wrapper->cer_right->chain->value()->end() instanceof CerCommerceProductReferenceField) {
     $preset->wrapper->cer_bidirectional->set(FALSE);
+    // Issue #2369863
+    $preset->is_new = FALSE;
     $preset->save();
 
     drupal_set_message(t('In order to prevent a race condition, bidirectionality has been disabled for this preset.'), 'warning');

@@ -1,3 +1,11 @@
+Imagecache_Token 7.x-1.x-dev, xxxx-xx-xx
+----------------------------------------
+#2853037 by monstrfolk, DamienMcKenna: Rewrite logic of tokens to improve
+  speed, add functionality, and fix bugs.
+#2277125 by DamienMcKenna: Attributes/styles with high depth levels will not
+  show in most default token trees.
+
+
 Imagecache_Token 7.x-1.0-rc2, 2016-03-06
 ----------------------------------------
 #2578455 by garphy: File and media fields weren't working.

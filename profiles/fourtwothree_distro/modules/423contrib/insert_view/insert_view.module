@@ -26,7 +26,7 @@ function insert_view_filter_info() {
 function insert_view_filter_tips($filter, $format, $long = FALSE) {
   if ($long) {
     return '<br />' . t(
-'<dl>
+    '<dl>
 <dt>Insert view filter allows to embed views using tags. The tag syntax is relatively simple: [view:name=display=args]</dt>
 <dt>For example [view:tracker=page=1] says, embed a view named "tracker", use the "page" display, and supply the argument "1".</dt>
 <dt>The <em>display</em> and <em>args</em> parameters can be omitted. If the display is left empty, the view\'s default display is used.</dt>
@@ -48,8 +48,9 @@ Valid examples:
 /**
  * Helper function to replace the tag syntax with the actual view.
  */
-function _insert_view_substitute_tags($text, $format) {
+function _insert_view_substitute_tags($text) {
   if (preg_match_all("/\[view:([^=\]]+)=?([^=\]]+)?=?([^\]]*)?\]/i", $text, $match)) {
+    $search = $replace = array();
     foreach ($match[0] as $key => $value) {
       $view_name = $match[1][$key];
       $display_id = ($match[2][$key] && !is_numeric($match[2][$key])) ? $match[2][$key] : 'default';
@@ -72,12 +73,12 @@ function _insert_view_substitute_tags($text, $format) {
  * embed a view in a node or something. Other than embedding the view it checks
  * the view access and also allows to use view arguments grabbed from the URL.
  *
- * @param $view_name
+ * @param string $view_name
  *   The name of the view.
- * @param $display_id
+ * @param string $display_id
  *   The display id to embed. If unsure, use 'default', as it will always be
  *   valid. But things like 'page' or 'block' should work here.
- * @param $args
+ * @param string $args
  *   Additional arguments to send to the view as if they were part of the URL in
  *   the form of arg1/arg2/arg3. You may use %0, %1, ..., %N to grab arguments
  *   from the URL.

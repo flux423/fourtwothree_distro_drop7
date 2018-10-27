@@ -103,78 +103,45 @@ function manualcrop_libraries_info() {
   $libraries = array();
 
   $libraries['jquery.imagesloaded'] = array(
-    'name' => 'jQuery imagesLoaded',
-    'vendor url' => 'http://desandro.github.io/imagesloaded',
-    'version callback' => 'manualcrop_library_get_version',
+    'name' => 'imagesLoaded',
+    'vendor url' => 'https://github.com/desandro/imagesloaded/tree/v2.1.1',
     'version arguments' => array(
-      'file' => array(
-        'jquery.imagesloaded.js',
-        'jquery.imagesloaded.min.js',
-      ),
+      'file' => 'jquery.imagesloaded.js',
       'pattern' => '# v([0-9\.]+)#',
       'lines' => 5,
       'cols' => 40,
     ),
     'files' => array(
       'js' => array(
-        'jquery.imagesloaded.js',
+        'jquery.imagesloaded.min.js',
       ),
     ),
     'variants' => array(
-      'minified' => array(
+      'source' => array(
         'files' => array(
           'js' => array(
-            'jquery.imagesloaded.min.js',
+            'jquery.imagesloaded.js',
           ),
         ),
-        'variant callback' => 'manualcrop_library_detect_variant',
-        'variant arguments' => array(),
       ),
     ),
   );
 
   $libraries['jquery.imgareaselect'] = array(
-    'name' => 'jQuery imgAreaSelect',
-    'vendor url' => 'http://odyniec.net/projects/imgareaselect',
-    'version callback' => 'libraries_get_version',
+    'name' => 'imgAreaSelect',
+    'vendor url' => 'https://github.com/odyniec/imgareaselect/tree/v0.9.11-rc.1',
     'version arguments' => array(
-      'file' => 'scripts/jquery.imgareaselect.js',
-      'pattern' => '#version ([0-9\.]+)#',
-      'lines' => 10,
-      'cols' => 20,
+      'file' => 'imgareaselect.jquery.json',
+      'pattern' => '#"version"[\t ]*:[\t ]*"([^"]+)"#',
+      'lines' => 6,
+      'cols' => 40,
     ),
     'files' => array(
       'js' => array(
-        'scripts/jquery.imgareaselect.js',
+        'jquery.imgareaselect.dev.js',
       ),
       'css' => array(
-        'css/imgareaselect-animated.css',
-      ),
-    ),
-    'variants' => array(
-      'minified' => array(
-        'files' => array(
-          'js' => array(
-            'scripts/jquery.imgareaselect.min.js',
-          ),
-          'css' => array(
-            'css/imgareaselect-animated.css',
-          ),
-        ),
-        'variant callback' => 'manualcrop_library_detect_variant',
-        'variant arguments' => array(),
-      ),
-      'packed' => array(
-        'files' => array(
-          'js' => array(
-            'scripts/jquery.imgareaselect.pack.js',
-          ),
-          'css' => array(
-            'css/imgareaselect-animated.css',
-          ),
-        ),
-        'variant callback' => 'manualcrop_library_detect_variant',
-        'variant arguments' => array(),
+        'distfiles/css/imgareaselect-animated.css',
       ),
     ),
   );
@@ -269,22 +236,29 @@ function manualcrop_field_widget_form_alter(&$element, &$form_state, $context) {
     $widget = $context['instance']['widget'];
 
     if (manualcrop_supported_widgets($widget['type'])) {
-      if ($widget['type'] == 'media_generic') {
-        // We don't check if Manual Crop is enabled, this happens in the file
-        // enntity edit form.
-        foreach (element_children($element) as $key) {
-          $element[$key]['#after_build'][] = 'manualcrop_media_element_process';
+      if (!empty($widget['settings']['manualcrop_enable'])) {
+        $after_build = FALSE;
+        if ($widget['type'] == 'media_generic') {
+          $after_build = !_manualcrop_media_element_add_after_build($element);
         }
 
-        _manualcrop_attach_files();
-      }
-      elseif (!empty($widget['settings']['manualcrop_enable'])) {
-        // Default, add a process and validate callback for each child.
         foreach (element_children($element) as $key) {
           $element[$key]['#process'][] = 'manualcrop_widget_process';
           $element[$key]['#element_validate'][] = 'manualcrop_croptool_validate';
-          $element[$key]['#element_validate'][] = 'file_managed_file_validate';
+
+          if ($widget['type'] == 'media_generic') {
+            $element[$key]['#element_validate'][] = 'media_element_validate';
+          }
+          elseif ($widget['type'] != 'media') {
+            $element[$key]['#element_validate'][] = 'file_managed_file_validate';
+          }
+
+          if ($after_build) {
+            _manualcrop_media_element_add_after_build($element[$key]);
+          }
         }
+
+        _manualcrop_attach_files();
 
         if (module_exists('insert')) {
           $element['#after_build'][] = 'manualcrop_insert_element_process';
@@ -298,12 +272,18 @@ function manualcrop_field_widget_form_alter(&$element, &$form_state, $context) {
  * Implements hook_field_attach_submit().
  */
 function manualcrop_field_attach_submit($entity_type, $entity, $form, &$form_state) {
-  // We don't do this to file_entity_edit because that form can use revisions
-  // if file_entity_revisions is enabled, and we want to save our crop data
-  // AFTER we know the revision id.
-  if (user_access('use manualcrop') && (!isset($form['#form_id']) || $form['#form_id'] != 'file_entity_edit')) {
-    manualcrop_croptool_submit($form, $form_state);
+  if (!user_access('use manualcrop')) {
+    // The user is not allowed to crop images.
+    return;
   }
+
+  if (isset($form['#form_id']) && $form['#form_id'] === 'file_entity_edit' && module_exists('file_entity_revisions')) {
+    // Skip the file_entity_edit form because it may use revisions and
+    // we want to save our crop data when the revision id is known.
+    return;
+  }
+
+  manualcrop_croptool_submit($form, $form_state);
 }
 
 /**
@@ -314,6 +294,8 @@ function manualcrop_manualcrop_supported_widgets() {
     'image_image' => array('thumblist', 'inline_crop', 'instant_crop'),
     'image_miw' => array('thumblist', 'inline_crop', 'instant_crop'),
     'media_generic' => array('thumblist', 'inline_crop'),
+    'linkimagefield_widget' => array('thumblist', 'inline_crop', 'instant_crop'),
+    'dragndrop_upload_image' => array('thumblist', 'inline_crop', 'instant_crop'),
   );
 }
 
@@ -343,8 +325,6 @@ function manualcrop_widget_process($element, &$form_state, $form) {
 /**
  * Additional after build callback to modify form elements added by the Insert module.
  *
- * @param $element
- *   The element to process.
  */
 function manualcrop_insert_element_process($element) {
   foreach (element_children($element) as $key) {
@@ -385,11 +365,8 @@ function manualcrop_insert_content($item, $style, $widget) {
 
 /**
  * Additional after build callback to modify the Media widget.
- *
- * @param $element
- *   The element to process.
  */
-function manualcrop_media_element_process($element) {
+function manualcrop_media_element_after_build($element) {
   $data = array(
     'manualcrop' => array(
       'entity_type' => $element['#entity_type'],
@@ -401,14 +378,22 @@ function manualcrop_media_element_process($element) {
   // Add the options to the element.
   $element['#media_options']['global'] += $data;
 
+  // Update the cached options.
+  $element_js_class = drupal_html_class('js-media-element-' . $element['#id']);
+  $cid = $element['browse_button']['#attached']['js'][0]['data']['media']['elements']['.' . $element_js_class]['global']['options'];
+  cache_set('media_options:' . $cid, $element['#media_options']['global'], 'cache_form', REQUEST_TIME + 21600);
+
   // Attach the options as javascript settings.
-  foreach ($element['#attached']['js'] as &$js) {
-    if (isset($js['data']['media'])) {
-      if (!isset($js['data']['media']['elements'][$element['#id']]['global'])) {
-        $js['data']['media']['elements'][$element['#id']]['global'] = array();
+  if (!empty($element['#attached']['js'])) {
+    foreach ($element['#attached']['js'] as &$js) {
+      if (isset($js['data']['media'])) {
+        if (!isset($js['data']['media']['elements']['#' . $element['#id']]['global'])) {
+          $js['data']['media']['elements']['#' . $element['#id']]['global'] = array();
+        }
+
+        $js['data']['media']['elements']['#' . $element['#id']]['global'] += $data;
+        break;
       }
-      $js['data']['media']['elements'][$element['#id']]['global'] += $data;
-      break;
     }
   }
 
@@ -424,7 +409,15 @@ function manualcrop_media_element_process($element) {
  * Element validation handler; Validates each crop selection.
  */
 function manualcrop_croptool_validate($element, &$form_state) {
-  if (!empty($form_state['manualcrop_data']['images']) && (!isset($form_state['triggering_element']) || !in_array($form_state['triggering_element']['#value'], array(t('Upload'), t('Remove'))))) {
+  if (!empty($form_state['manualcrop_data']['images'])) {
+    if (isset($form_state['triggering_element'])) {
+      // Skip validation when needed.
+      $te = $form_state['triggering_element'];
+      if (!empty($te['#manualcrop_skip']) || in_array($te['#value'], array(t('Upload'), t('Remove'), t('Browse')))) {
+        return;
+      }
+    }
+
     // Create a new key, to store processed selections, in the data array.
     $form_state['manualcrop_data']['selections'] = array();
     $selections = &$form_state['manualcrop_data']['selections'];
@@ -502,7 +495,9 @@ function manualcrop_croptool_validate($element, &$form_state) {
  * Form submit handler; Saves each crop selection.
  */
 function manualcrop_croptool_submit($form, &$form_state) {
-  if (!empty($form_state['manualcrop_data']['selections'])) {
+  static $submitted = FALSE;
+
+  if (!$submitted && !empty($form_state['manualcrop_data']['selections'])) {
     // Loop trough the selections to save them.
     foreach ($form_state['manualcrop_data']['selections'] as $fid => $data) {
       // In general this file entity should be loaded from a cache, so this
@@ -523,8 +518,9 @@ function manualcrop_croptool_submit($form, &$form_state) {
       drupal_set_message(t('The crop selections have been saved.'));
     }
 
-    // Unset the form state data to prevent submitting twice.
-    unset($form_state['manualcrop_data']);
+    // Prevent additional submits.
+    unset($form_state['manualcrop_data']['selections']);
+    $submitted = TRUE;
   }
 }
 
@@ -838,10 +834,10 @@ function manualcrop_crop_and_scale_effect(&$image, $data) {
     return TRUE;
   }
   else {
-    // Automated crop, don't use image_scale_and_crop_effect() unless both
-    // imagedimensions are bigger than the desired dimensions. This way
-    // unwanted upscaling is prevented.
-    if ($image->info['width'] > $scale_data['width'] && $image->info['height'] > $scale_data['height']) {
+    // Automated crop, don't use image_scale_and_crop_effect() unless
+    // upscaling is allowed or both image dimensions are bigger than
+    // the desired dimensions.
+    if ($scale_data['upscale'] || ($image->info['width'] > $scale_data['width'] && $image->info['height'] > $scale_data['height'])) {
       if (!image_scale_and_crop_effect($image, $scale_data)) {
         return FALSE;
       }
@@ -908,16 +904,24 @@ function manualcrop_reuse_effect(&$image, $data) {
     return FALSE;
   }
 
-  // Get the first image style effect.
+  // Load the style to reuse.
   $style = image_style_load($data['reuse_crop_style']);
-  $effect = reset($style['effects']);
 
-  if ($effect) {
-    image_effect_apply($image, $effect);
+  if (empty($data['apply_all_effects'])) {
+    // Apply only the crop effect.
+    $effect = reset($style['effects']);
+    return image_effect_apply($image, $effect);
+  }
+  else {
+    // Apply all effects.
+    foreach ($style['effects'] as $effect) {
+      if (!image_effect_apply($image, $effect)) {
+        return FALSE;
+      }
+    }
+
     return TRUE;
   }
-
-  return FALSE;
 }
 
 /**
@@ -937,19 +941,30 @@ function manualcrop_reuse_effect(&$image, $data) {
  * @see image_crop_effect()
  */
 function manualcrop_auto_reuse_effect(&$image, $data) {
-  // Get the style to reuse.
-  $style_name = _manualcrop_get_auto_reuse_style_name($image->source, $data);
-
-  if ($style_name) {
-    // Load and apply the Manual Crop effect.
+  if ($style_name = _manualcrop_get_auto_reuse_style_name($image->source, $data)) {
+    // Load the style to reuse.
     $style = image_style_load($style_name);
-    $effect = reset($style['effects']);
 
-    return image_effect_apply($image, $effect);
+    if (empty($data['apply_all_effects'])) {
+      // Apply only the crop effect.
+      $effect = reset($style['effects']);
+      return image_effect_apply($image, $effect);
+    }
+    else {
+      // Apply all effects.
+      foreach ($style['effects'] as $effect) {
+        if (!image_effect_apply($image, $effect)) {
+          return FALSE;
+        }
+      }
+
+      return TRUE;
+    }
   }
   elseif (!empty($data['fallback_style'])) {
     // Load and apply all effects of the fallback style.
     $style = image_style_load($data['fallback_style']);
+
     foreach ($style['effects'] as $effect) {
       if (!image_effect_apply($image, $effect)) {
         return FALSE;

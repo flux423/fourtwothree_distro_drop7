@@ -1,18 +1,21 @@
 <?php
 
+/**
+ * Settings form.
+ */
 function content_type_extras_settings() {
   $defaults = content_type_extras_get_default();
-  // Get all available user roles
+  // Get all available user roles.
   $roles = user_roles();
   $admin_role = variable_get('user_admin_role', 0);
 
   if ($admin_role != 0) {
-    $roles[$admin_role] .= t(' <em>(administrator role)</em>');
+    $roles[$admin_role] .= ' ' . t('<em>(administrator role)</em>');
   }
-  if(!isset($defaults['user_permissions']['edit_own_roles'])) {
+  if (!isset($defaults['user_permissions']['edit_own_roles'])) {
     $defaults['user_permissions']['edit_own_roles'] = array();
   }
-  if(!isset($defaults['user_permissions']['delete_own_roles'])) {
+  if (!isset($defaults['user_permissions']['delete_own_roles'])) {
     $defaults['user_permissions']['delete_own_roles'] = array();
   }
 
@@ -86,6 +89,13 @@ function content_type_extras_settings() {
           '#default_value' => $defaults['content_type_extras_save_and_edit_button'],
           '#required'      => 1,
         ),
+        'content_type_extras_delete_button' => array(
+          '#type'          => 'textfield',
+          '#title'         => t('Delete button value'),
+          '#description'   => t('The name of the Delete button that will display on the content edit form if displayed.'),
+          '#default_value' => $defaults['content_type_extras_delete_button'],
+          '#required'      => 1,
+        ),
         'content_type_extras_cancel' => array(
           '#type'    => 'radios',
           '#title'   => t('Cancel button'),
@@ -94,7 +104,14 @@ function content_type_extras_settings() {
             t('Enabled'),
           ),
           '#default_value' => $defaults['content_type_extras_cancel'],
-        )
+        ),
+        'content_type_extras_cancel_button' => array(
+          '#type'    => 'textfield',
+          '#title'   => t('Cancel button value'),
+          '#description'   => t('The name of the Cancel button that will display on the content edit form if enabled'),
+          '#default_value' => $defaults['content_type_extras_cancel_button'],
+          '#required'      => 1,
+        ),
       ),
       'workflow' => array(
         '#type'   => 'fieldset',
@@ -188,6 +205,27 @@ function content_type_extras_settings() {
             '#title'         => t('Disable token replacement patterns'),
             '#default_value' => $defaults['content_type_extras_disable_token_display'],
           ),
+          'content_type_extras_cancel_button_location' => array(
+            '#type'          => 'radios',
+            '#description'   => t('Choose whether the user will be taken to the previous page or a specific page when the Cancel button is pressed.'),
+            '#title'         => t('Cancel button destination'),
+            '#options'       => array(
+              'previous' => t('Previous page'),
+              'static_path' => t('Static path'),
+            ),
+            '#default_value' => $defaults['content_type_extras_cancel_button_location'],
+          ),
+          'content_type_extras_cancel_button_location_path' => array(
+            '#type'          => 'textfield',
+            '#description'   => t('Set the path where the user should be redirected when the cancel button is pressed. <strong>Note:</strong> In most cases you will probably want to prepend the path with a /.'),
+            '#title'         => t('Path'),
+            '#default_value' => $defaults['content_type_extras_cancel_button_location_path'],
+            '#states'        => array(
+              'visible' => array(
+                ':input[name="content_type_extras_cancel_button_location"]' => array('value' => 'static_path'),
+              ),
+            ),
+          ),
         ),
         'node_titles' => array(
           '#type'   => 'fieldset',
@@ -235,7 +273,7 @@ function content_type_extras_settings() {
         'content_type_extras_excluded_node_forms' => array(
           '#type'          => 'textarea',
           '#title'         => t('Excluded node forms'),
-          '#description'   => t('Enter the node form ids that you would like to exclude from being processed by Content Type: Extras, one per line.<br><strong>Note:</strong> \'subscriptions_ui_node_form\' and \'field_collection_item_form\' will always be added to prevent errors.'),
+          '#description'   => t("Enter the node form ids that you would like to exclude from being processed by Content Type: Extras, one per line.<br><strong>Note:</strong> 'subscriptions_ui_node_form' and 'field_collection_item_form' will always be added to prevent errors."),
           '#default_value' => implode("\n", $defaults['content_type_extras_excluded_node_forms']),
         ),
       ),
@@ -411,9 +449,12 @@ function content_type_extras_settings() {
   return $form;
 }
 
+/**
+ * Submission function for settings form.
+ */
 function content_type_extras_settings_submit(&$form, &$form_state) {
   $values = $form_state['values'];
-  // Place the values of content_type_extras_excluded_node_forms into an array
+  // Place the values of content_type_extras_excluded_node_forms into an array.
   $values['content_type_extras_excluded_node_forms'] = explode("\n", $values['content_type_extras_excluded_node_forms']);
 
   unset($values['submit'], $values['form_build_id'], $values['form_token'], $values['form_id'], $values['op']);

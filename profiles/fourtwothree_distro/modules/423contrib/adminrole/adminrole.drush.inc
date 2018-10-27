@@ -1,6 +1,4 @@
 <?php
-// $Id: adminrole.drush.inc,v 1.1.2.1 2010/08/14 17:25:00 davereid Exp $
-
 /**
  * @file
  * Drush integration functions for the adminrole module.

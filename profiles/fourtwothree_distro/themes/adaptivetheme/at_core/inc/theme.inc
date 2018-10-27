@@ -224,7 +224,7 @@ function adaptivetheme_item_list($vars) {
   }
 
   if (isset($title) && $title !== '') {
-    $output .= '<h3>' . $title . '</h3>';
+    $output .= '<h3>' .  filter_xss_admin($title) . '</h3>';
   }
 
   if (!empty($items)) {
@@ -436,7 +436,7 @@ function adaptivetheme_links($vars) {
 
       if (isset($link['href'])) {
         if (at_get_setting('menu_item_span_elements')) {
-          $link['title'] = '<span>' . $link['title'] . '</span>';
+          $link['title'] = '<span>' . filter_xss_admin($link['title']) . '</span>';
           $link['html'] = TRUE;
         }
         $output .= l($link['title'], $link['href'], $link);
@@ -444,6 +444,9 @@ function adaptivetheme_links($vars) {
       elseif (!empty($link['title'])) {
         if (empty($link['html'])) {
           $link['title'] = check_plain($link['title']);
+        }
+        else {
+          $link['title'] =  filter_xss_admin($link['title']);
         }
         $span_attributes = '';
         if (isset($link['attributes'])) {

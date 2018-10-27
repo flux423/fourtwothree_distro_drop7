@@ -2,6 +2,7 @@ name = Admin Role
 description = Automatically assign all permissions to an admin role.
 package = Administration
 core = 7.x
+configure = 'admin/config/people/accounts'
 
 ; Information added by drupal.org packaging script on 2012-03-03
 version = "7.x-1.x-dev"
@@ -10,9 +11,9 @@ project = "adminrole"
 datestamp = "1330778000"
 
 
-; Information added by Drupal.org packaging script on 2015-04-03
-version = "7.x-1.0+3-dev"
+; Information added by Drupal.org packaging script on 2016-12-15
+version = "7.x-1.1+4-dev"
 core = "7.x"
 project = "adminrole"
-datestamp = "1428088988"
+datestamp = "1481830178"
 

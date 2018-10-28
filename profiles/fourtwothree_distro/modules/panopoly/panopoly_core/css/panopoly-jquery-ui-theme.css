@@ -52,7 +52,7 @@
 }
 
 .ui-front {
-  z-index: 10001 !important;
+  z-index: 100;
 }
 
 
@@ -283,6 +283,7 @@ button.ui-button::-moz-focus-inner {
   background-color: transparent;
 }
 .ui-dialog .ui-dialog-titlebar {
+  padding: 0;
   position: relative;
   height: 50px;
   font-size: 16px;
@@ -472,24 +473,12 @@ button.ui-button::-moz-focus-inner {
   color: #ffffff;
 }
 
-/**
- * When an input is used in the header, make sure it's color is dark, because
- * the default background is probably light.
- */
-.ui-widget-header input,
-.ui-widget-header button,
-.ui-widget-header select,
-.ui-widget-header optgroup,
-.ui-widget-header textarea {
-  color: #333;
-}
-
 /* Interaction states
 ----------------------------------*/
 .ui-state-default,
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
-  border: 1px solid transparent;
+  border: none;
   background: #cccccc;
   font-weight: normal;
   color: #333333;

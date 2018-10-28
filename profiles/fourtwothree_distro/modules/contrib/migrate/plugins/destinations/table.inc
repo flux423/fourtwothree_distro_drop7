@@ -10,7 +10,6 @@
  * the Schema API.
  */
 class MigrateDestinationTable extends MigrateDestination {
-
   /**
    * The schema of the current table.
    *
@@ -82,7 +81,6 @@ class MigrateDestinationTable extends MigrateDestination {
    *  Object object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
    *  Raw source data object - passed through to prepare/complete handlers.
-   *
    * @return array
    *  Array of key fields of the object that was saved if
    *  successful. FALSE on failure.
@@ -124,7 +122,7 @@ class MigrateDestinationTable extends MigrateDestination {
       }
 
       $select = db_select($this->tableName)
-        ->fields($this->tableName);
+                ->fields($this->tableName);
       foreach ($this->schema['primary key'] as $key) {
         $select->condition($key, $entity->{$key});
       }
@@ -161,7 +159,6 @@ class MigrateDestinationTable extends MigrateDestination {
    *
    * @param Migration $migration
    *  Optionally, the migration containing this destination.
-   *
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.

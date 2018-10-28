@@ -1,10 +1,17 @@
 name = Media WYSIWYG View Mode
-description = DEPRECATED, this folder is only here so that the module can be uninstalled.
+description = Enables files inside of the WYSIWYG editor to be displayed using a separate view mode.
 package = Media
 core = 7.x
 
-; Information added by Drupal.org packaging script on 2018-04-25
-version = "7.x-2.19"
+dependencies[] = media_wysiwyg
+
+configure = admin/config/media/wysiwyg-view-mode
+
+files[] = media_wysiwyg_view_mode.test
+
+; Information added by Drupal.org packaging script on 2015-07-14
+version = "7.x-2.0-beta1"
 core = "7.x"
 project = "media"
-datestamp = "1524677887"
+datestamp = "1436895542"
+

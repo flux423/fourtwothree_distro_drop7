@@ -9,9 +9,7 @@
 /**
  * Pattern for detecting a valid UUID.
  */
-if (!defined('UUID_PATTERN')) {
-  define('UUID_PATTERN', '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}');
-}
+define('UUID_PATTERN', '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}');
 
 /**
  * Generates a UUID using the Windows internal GUID generator.
@@ -67,5 +65,4 @@ if (!function_exists('uuid_is_valid')) {
   function uuid_is_valid($uuid) {
     return preg_match('/^' . UUID_PATTERN . '$/', $uuid);
   }
-
 }

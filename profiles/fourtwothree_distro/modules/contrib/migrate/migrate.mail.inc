@@ -6,7 +6,6 @@
  */
 
 class MigrateMailIgnore extends DefaultMailSystem {
-
   /**
    * On an email request, do nothing and say we did.
    *
@@ -15,7 +14,6 @@ class MigrateMailIgnore extends DefaultMailSystem {
    *
    * @param $message
    *   A message array, as described in hook_mail_alter().
-   *
    * @return
    *   TRUE if the mail was successfully accepted, otherwise FALSE.
    */

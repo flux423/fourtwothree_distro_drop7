@@ -6,8 +6,9 @@
  *   Launches the media browser which allows users to pick a piece of media.
  *
  * Drupal.media.popups.mediaStyleSelector
- *  Launches the style selection form where the user can choose what
- *  format/style they want their media in.
+ *  Launches the style selection form where the user can choose
+ *  what format / style they want their media in.
+ *
  */
 
 (function ($) {
@@ -17,82 +18,73 @@ namespace('Drupal.media.popups');
  * Media browser popup. Creates a media browser dialog.
  *
  * @param {function}
- *   onSelect Callback for when dialog is closed, received (Array media, Object
- *   extra);
+ *          onSelect Callback for when dialog is closed, received (Array
+ *          media, Object extra);
  * @param {Object}
- *   globalOptions Global options that will get passed upon initialization of
- *   the browser. @see Drupal.media.popups.mediaBrowser.getDefaults();
+ *          globalOptions Global options that will get passed upon initialization of the browser.
+ *          @see Drupal.media.popups.mediaBrowser.getDefaults();
+ *
  * @param {Object}
- *   pluginOptions Options for specific plugins. These are passed to the plugin
- *   upon initialization.  If a function is passed here as a callback, it is
- *   obviously not passed, but is accessible to the plugin in
- *   Drupal.settings.variables. Example:
- *   pluginOptions = {library: {url_include_patterns:'/foo/bar'}};
+ *          pluginOptions Options for specific plugins. These are passed
+ *          to the plugin upon initialization.  If a function is passed here as
+ *          a callback, it is obviously not passed, but is accessible to the plugin
+ *          in Drupal.settings.variables.
+ *
+ *          Example
+ *          pluginOptions = {library: {url_include_patterns:'/foo/bar'}};
+ *
  * @param {Object}
- *   widgetOptions Options controlling the appearance and behavior of the modal
- *   dialog. @see Drupal.media.popups.mediaBrowser.getDefaults();
+ *          widgetOptions Options controlling the appearance and behavior of the
+ *          modal dialog.
+ *          @see Drupal.media.popups.mediaBrowser.getDefaults();
  */
 Drupal.media.popups.mediaBrowser = function (onSelect, globalOptions, pluginOptions, widgetOptions) {
-  // Get default dialog options.
   var options = Drupal.media.popups.mediaBrowser.getDefaults();
-
-  // Add global, plugin and widget options.
   options.global = $.extend({}, options.global, globalOptions);
   options.plugins = pluginOptions;
   options.widget = $.extend({}, options.widget, widgetOptions);
 
-  // Find the URL of the modal iFrame.
+  // Create it as a modal window.
   var browserSrc = options.widget.src;
-
   if ($.isArray(browserSrc) && browserSrc.length) {
     browserSrc = browserSrc[browserSrc.length - 1];
   }
-
-  // Create an array of parameters to send along to the iFrame.
+  // Params to send along to the iframe.  WIP.
   var params = {};
-
-  // Add global field widget settings and plugin information.
   $.extend(params, options.global);
   params.plugins = options.plugins;
 
-  // Append the list of parameters to the iFrame URL as query parameters.
   browserSrc += '&' + $.param(params);
-
-  // Create an iFrame with the iFrame URL.
   var mediaIframe = Drupal.media.popups.getPopupIframe(browserSrc, 'mediaBrowser');
-
-  // Attach an onLoad event.
+  // Attach the onLoad event
   mediaIframe.bind('load', options, options.widget.onLoad);
 
-  // Create an array of Dialog options.
+  /**
+   * Setting up the modal dialog
+   */
+  var ok = 'OK';
+  var notSelected = 'You have not selected anything!';
+
+  if (Drupal && Drupal.t) {
+    ok = Drupal.t(ok);
+    notSelected = Drupal.t(notSelected);
+  }
+
+  // @todo: let some options come through here. Currently can't be changed.
   var dialogOptions = options.dialog;
 
-  // Setup the dialog buttons.
-  var ok = Drupal.t('OK');
-  var notSelected = Drupal.t('You have not selected anything!');
-
   dialogOptions.buttons[ok] = function () {
-    // Find the current file selection.
     var selected = this.contentWindow.Drupal.media.browser.selectedMedia;
-
-    // Alert the user if a selection has yet to be made.
     if (selected.length < 1) {
       alert(notSelected);
-
       return;
     }
-
-    // Select the file.
     onSelect(selected);
-
-    // Close the dialog.
-    $(this).dialog('close');
+    $(this).dialog("close");
   };
 
-  // Create a jQuery UI dialog with the given options.
   var dialog = mediaIframe.dialog(dialogOptions);
 
-  // Allow the dialog to react to re-sizing, scrolling, etc.
   Drupal.media.popups.sizeDialog(dialog);
   Drupal.media.popups.resizeDialog(dialog);
   Drupal.media.popups.scrollDialog(dialog);
@@ -101,17 +93,23 @@ Drupal.media.popups.mediaBrowser = function (onSelect, globalOptions, pluginOpti
   return mediaIframe;
 };
 
-/**
- * Retrieves a list of default settings for the media browser.
- *
- * @return
- *   An array of default settings.
- */
+Drupal.media.popups.mediaBrowser.mediaBrowserOnLoad = function (e) {
+  var options = e.data;
+  if (this.contentWindow.Drupal.media == undefined) return;
+
+  if (this.contentWindow.Drupal.media.browser.selectedMedia.length > 0) {
+    var ok = (Drupal && Drupal.t) ? Drupal.t('OK') : 'OK';
+    var ok_func = $(this).dialog('option', 'buttons')[ok];
+    ok_func.call(this);
+    return;
+  }
+};
+
 Drupal.media.popups.mediaBrowser.getDefaults = function () {
   return {
     global: {
       types: [], // Types to allow, defaults to all.
-      enabledPlugins: [] // If provided, a list of plugins which should be enabled.
+      activePlugins: [] // If provided, a list of plugins which should be enabled.
     },
     widget: { // Settings for the actual iFrame which is launched.
       src: Drupal.settings.media.browserUrl, // Src of the media browser (if you want to totally override it)
@@ -121,119 +119,74 @@ Drupal.media.popups.mediaBrowser.getDefaults = function () {
   };
 };
 
-/**
- * Sets up the iFrame buttons.
- */
-Drupal.media.popups.mediaBrowser.mediaBrowserOnLoad = function (e) {
-  var options = e.data;
-
-  // Ensure that the iFrame is defined.
-  if (typeof this.contentWindow.Drupal.media === 'undefined' || typeof
-  this.contentWindow.Drupal.media.browser === 'undefined') {
-    return;
-  }
-
-  // Check if a selection has been made and press the 'ok' button.
-  if (this.contentWindow.Drupal.media.browser.selectedMedia.length > 0) {
-    var ok = Drupal.t('OK');
-    var ok_func = $(this).dialog('option', 'buttons')[ok];
-
-    ok_func.call(this);
-
-    return;
-  }
-};
-
-/**
- * Finalizes the selection of a file.
- *
- * Alerts the user if a selection has yet to be made, triggers the file
- * selection and closes the modal dialog.
- */
 Drupal.media.popups.mediaBrowser.finalizeSelection = function () {
-  // Find the current file selection.
   var selected = this.contentWindow.Drupal.media.browser.selectedMedia;
-
-  // Alert the user if a selection has yet to be made.
   if (selected.length < 1) {
     alert(notSelected);
-
     return;
   }
-
-  // Select the file.
   onSelect(selected);
-
-  // Close the dialog.
-  $(this).dialog('close');
-};
+  $(this).dialog("close");
+}
 
 /**
  * Style chooser Popup. Creates a dialog for a user to choose a media style.
  *
  * @param mediaFile
- *   The mediaFile you are requesting this formatting form for.
- *   @todo: should this be fid? That's actually all we need now.
+ *          The mediaFile you are requesting this formatting form for.
+ *          @todo: should this be fid?  That's actually all we need now.
  *
  * @param Function
- *   onSubmit Function to be called when the user chooses a media style. Takes
- *   one parameter (Object formattedMedia).
+ *          onSubmit Function to be called when the user chooses a media
+ *          style. Takes one parameter (Object formattedMedia).
  *
  * @param Object
- *   options Options for the mediaStyleChooser dialog.
+ *          options Options for the mediaStyleChooser dialog.
  */
 Drupal.media.popups.mediaStyleSelector = function (mediaFile, onSelect, options) {
   var defaults = Drupal.media.popups.mediaStyleSelector.getDefaults();
-
   // @todo: remove this awful hack :(
   if (typeof defaults.src === 'string' ) {
     defaults.src = defaults.src.replace('-media_id-', mediaFile.fid) + '&fields=' + encodeURIComponent(JSON.stringify(mediaFile.fields));
   }
   else {
     var src = defaults.src.shift();
-
     defaults.src.unshift(src);
     defaults.src = src.replace('-media_id-', mediaFile.fid) + '&fields=' + encodeURIComponent(JSON.stringify(mediaFile.fields));
   }
-
   options = $.extend({}, defaults, options);
-
-  // Create an iFrame with the iFrame URL.
+  // Create it as a modal window.
   var mediaIframe = Drupal.media.popups.getPopupIframe(options.src, 'mediaStyleSelector');
-
-  // Attach an onLoad event.
+  // Attach the onLoad event
   mediaIframe.bind('load', options, options.onLoad);
 
-  // Create an array of Dialog options.
+  /**
+   * Set up the button text
+   */
+  var ok = 'OK';
+  var notSelected = 'Very sorry, there was an unknown error embedding media.';
+
+  if (Drupal && Drupal.t) {
+    ok = Drupal.t(ok);
+    notSelected = Drupal.t(notSelected);
+  }
+
+  // @todo: let some options come through here. Currently can't be changed.
   var dialogOptions = Drupal.media.popups.getDialogOptions();
 
-  // Setup the dialog buttons.
-  var ok = Drupal.t('OK');
-  var notSelected = Drupal.t('Very sorry, there was an unknown error embedding media.');
-
   dialogOptions.buttons[ok] = function () {
-    // Find the current file selection.
-    var formattedMedia = this.contentWindow.Drupal.media.formatForm.getFormattedMedia();
-    formattedMedia.options = $.extend({}, mediaFile.attributes, formattedMedia.options);
 
-    // Alert the user if a selection has yet to be made.
+    var formattedMedia = this.contentWindow.Drupal.media.formatForm.getFormattedMedia();
     if (!formattedMedia) {
       alert(notSelected);
-
       return;
     }
-
-    // Select the file.
     onSelect(formattedMedia);
-
-    // Close the dialog.
-    $(this).dialog('close');
+    $(this).dialog("close");
   };
 
-  // Create a jQuery UI dialog with the given options.
   var dialog = mediaIframe.dialog(dialogOptions);
 
-  // Allow the dialog to react to re-sizing, scrolling, etc.
   Drupal.media.popups.sizeDialog(dialog);
   Drupal.media.popups.resizeDialog(dialog);
   Drupal.media.popups.scrollDialog(dialog);
@@ -252,62 +205,59 @@ Drupal.media.popups.mediaStyleSelector.getDefaults = function () {
   };
 };
 
+
 /**
  * Style chooser Popup. Creates a dialog for a user to choose a media style.
  *
  * @param mediaFile
- *   The mediaFile you are requesting this formatting form for.
- *   @todo: should this be fid? That's actually all we need now.
+ *          The mediaFile you are requesting this formatting form for.
+ *          @todo: should this be fid?  That's actually all we need now.
  *
  * @param Function
- *   onSubmit Function to be called when the user chooses a media style. Takes
- *   one parameter (Object formattedMedia).
+ *          onSubmit Function to be called when the user chooses a media
+ *          style. Takes one parameter (Object formattedMedia).
  *
  * @param Object
- *   options Options for the mediaStyleChooser dialog.
+ *          options Options for the mediaStyleChooser dialog.
  */
 Drupal.media.popups.mediaFieldEditor = function (fid, onSelect, options) {
   var defaults = Drupal.media.popups.mediaFieldEditor.getDefaults();
-
   // @todo: remove this awful hack :(
   defaults.src = defaults.src.replace('-media_id-', fid);
   options = $.extend({}, defaults, options);
-
-  // Create an iFrame with the iFrame URL.
+  // Create it as a modal window.
   var mediaIframe = Drupal.media.popups.getPopupIframe(options.src, 'mediaFieldEditor');
-
-  // Attach an onLoad event.
+  // Attach the onLoad event
+  // @TODO - This event is firing too early in IE on Windows 7,
+  // - so the height being calculated is too short for the content.
   mediaIframe.bind('load', options, options.onLoad);
 
-  // Create an array of Dialog options.
+  /**
+   * Set up the button text
+   */
+  var ok = 'OK';
+  var notSelected = 'Very sorry, there was an unknown error embedding media.';
+
+  if (Drupal && Drupal.t) {
+    ok = Drupal.t(ok);
+    notSelected = Drupal.t(notSelected);
+  }
+
+  // @todo: let some options come through here. Currently can't be changed.
   var dialogOptions = Drupal.media.popups.getDialogOptions();
 
-  // Setup the dialog buttons.
-  var ok = Drupal.t('OK');
-  var notSelected = Drupal.t('Very sorry, there was an unknown error embedding media.');
-
   dialogOptions.buttons[ok] = function () {
-    // Find the current file selection.
     var formattedMedia = this.contentWindow.Drupal.media.formatForm.getFormattedMedia();
-
-    // Alert the user if a selection has yet to be made.
     if (!formattedMedia) {
       alert(notSelected);
-
       return;
     }
-
-    // Select the file.
     onSelect(formattedMedia);
-
-    // Close the dialog.
-    $(this).dialog('close');
+    $(this).dialog("close");
   };
 
-  // Create a jQuery UI dialog with the given options.
   var dialog = mediaIframe.dialog(dialogOptions);
 
-  // Allow the dialog to react to re-sizing, scrolling, etc.
   Drupal.media.popups.sizeDialog(dialog);
   Drupal.media.popups.resizeDialog(dialog);
   Drupal.media.popups.scrollDialog(dialog);
@@ -328,8 +278,9 @@ Drupal.media.popups.mediaFieldEditor.getDefaults = function () {
   };
 };
 
+
 /**
- * Generic functions to both the media-browser and style selector.
+ * Generic functions to both the media-browser and style selector
  */
 
 /**
@@ -337,7 +288,6 @@ Drupal.media.popups.mediaFieldEditor.getDefaults = function () {
  */
 Drupal.media.popups.getDialogOptions = function () {
   return {
-    title: Drupal.t('Media browser'),
     buttons: {},
     dialogClass: Drupal.settings.media.dialogOptions.dialogclass,
     modal: Drupal.settings.media.dialogOptions.modal,
@@ -353,16 +303,7 @@ Drupal.media.popups.getDialogOptions = function () {
     },
     zIndex: Drupal.settings.media.dialogOptions.zindex,
     close: function (event, ui) {
-      var elem = $(event.target);
-      var id = elem.attr('id');
-      if(id == 'mediaStyleSelector') {
-        $(this).dialog("destroy");
-        $('#mediaStyleSelector').remove();
-      }
-      else {
-        $(this).dialog("destroy");
-        $('#mediaBrowser').remove();
-      }
+      $(event.target).remove();
     }
   };
 };
@@ -374,7 +315,7 @@ Drupal.media.popups.getPopupIframe = function (src, id, options) {
   var defaults = {width: '100%', scrolling: 'auto'};
   var options = $.extend({}, defaults, options);
 
-  return $('<iframe class="media-modal-frame" tabindex="0"/>')
+  return $('<iframe class="media-modal-frame"/>')
   .attr('src', src)
   .attr('width', options.width)
   .attr('id', id)
@@ -384,7 +325,6 @@ Drupal.media.popups.getPopupIframe = function (src, id, options) {
 Drupal.media.popups.overlayDisplace = function (dialog) {
   if (parent.window.Drupal.overlay && jQuery.isFunction(parent.window.Drupal.overlay.getDisplacement)) {
     var overlayDisplace = parent.window.Drupal.overlay.getDisplacement('top');
-
     if (dialog.offset().top < overlayDisplace) {
       dialog.css('top', overlayDisplace);
     }
@@ -401,7 +341,6 @@ Drupal.media.popups.sizeDialog = function (dialogElement) {
   if (!dialogElement.is(':visible')) {
     return;
   }
-
   var windowWidth = $(window).width();
   var dialogWidth = windowWidth * 0.8;
   var windowHeight = $(window).height();
@@ -438,7 +377,6 @@ Drupal.media.popups.scrollDialog = function (dialogElement) {
     if (!dialogElement.is(':visible')) {
       return;
     }
-
     dialogElement.dialog("option", "position", 'center');
   });
 }

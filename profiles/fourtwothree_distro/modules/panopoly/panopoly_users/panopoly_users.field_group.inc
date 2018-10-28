@@ -8,7 +8,7 @@
  * Implements hook_field_group_info().
  */
 function panopoly_users_field_group_info() {
-  $field_groups = array();
+  $export = array();
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -35,11 +35,7 @@ function panopoly_users_field_group_info() {
       ),
     ),
   );
-  $field_groups['group_user_profile|user|user|form'] = $field_group;
+  $export['group_user_profile|user|user|form'] = $field_group;
 
-  // Translatables
-  // Included for use with string extractors like potx.
-  t('User Profile');
-
-  return $field_groups;
+  return $export;
 }

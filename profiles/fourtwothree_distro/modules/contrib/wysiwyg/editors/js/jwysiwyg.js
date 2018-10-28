@@ -5,11 +5,11 @@
  */
 Drupal.wysiwyg.editor.attach.jwysiwyg = function(context, params, settings) {
   // Attach editor.
-  $('#' + params.field).wysiwyg(settings);
+  $('#' + params.field).wysiwyg();
 };
 
 /**
- * Detach a single editor instance.
+ * Detach a single or all editors.
  */
 Drupal.wysiwyg.editor.detach.jwysiwyg = function (context, params, trigger) {
   var $field = $('#' + params.field);

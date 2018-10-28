@@ -119,23 +119,8 @@ class SearchApiViewsHandlerFilterFulltext extends SearchApiViewsHandlerFilterTex
     }
 
     $words = preg_split('/\s+/', $input);
-    $quoted = FALSE;
     foreach ($words as $i => $word) {
-      $word_length = drupal_strlen($word);
-      if (!$word_length) {
-        unset($words[$i]);
-        continue;
-      }
-      // Protect quoted strings.
-      if ($quoted && $word[strlen($word) - 1] === '"') {
-        $quoted = FALSE;
-        continue;
-      }
-      if ($quoted || $word[0] === '"') {
-        $quoted = TRUE;
-        continue;
-      }
-      if ($word_length < $this->options['min_length']) {
+      if (drupal_strlen($word) < $this->options['min_length']) {
         unset($words[$i]);
       }
     }
@@ -159,8 +144,7 @@ class SearchApiViewsHandlerFilterFulltext extends SearchApiViewsHandlerFilterTex
       return;
     }
     $fields = $this->options['fields'];
-    $available_fields = array_keys($this->getFulltextFields());
-    $fields = $fields ? array_intersect($fields, $available_fields) : $available_fields;
+    $fields = $fields ? $fields : array_keys($this->getFulltextFields());
 
     // If something already specifically set different fields, we silently fall
     // back to mere filtering.

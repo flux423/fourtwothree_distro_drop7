@@ -93,8 +93,7 @@ function migrate_ui_wizard_next_submit($form, &$form_state) {
 }
 
 /**
- * Submit handler for the Save settings button. Register the migrations that
- * were
+ * Submit handler for the Save settings button. Register the migrations that were
  * (implicitly) defined along the way and redirect to the Migrate dashboard.
  */
 function migrate_ui_wizard_submit($form, &$form_state) {
@@ -102,7 +101,7 @@ function migrate_ui_wizard_submit($form, &$form_state) {
   $wizard = $form_state['wizard'];
   $wizard->formSaveSettings();
   $form_state['redirect'] = 'admin/content/migrate/groups/' .
-    $wizard->getGroupName();
+                            $wizard->getGroupName();
 }
 
 /**
@@ -116,7 +115,7 @@ function migrate_ui_wizard_migrate_submit($form, &$form_state) {
   $wizard->formSaveSettings();
   $wizard->formPerformImport();
   $form_state['redirect'] = 'admin/content/migrate/groups/' .
-    $wizard->getGroupName();
+                            $wizard->getGroupName();
 }
 
 /**
@@ -125,7 +124,6 @@ function migrate_ui_wizard_migrate_submit($form, &$form_state) {
  * WordPress, etc.).
  */
 abstract class MigrateUIWizard {
-
   /**
    * We maintain a doubly-linked list of wizard steps, both to support
    * previous/next, and to easily insert steps dynamically.
@@ -187,7 +185,6 @@ abstract class MigrateUIWizard {
    * @var string
    */
   protected $groupName = 'default';
-
   public function getGroupName() {
     return $this->groupName;
   }
@@ -220,7 +217,6 @@ abstract class MigrateUIWizard {
    * @var array
    */
   protected $extenders = array();
-
   public function getExtender($extender_class) {
     if (isset($this->extenders[$extender_class])) {
       return $this->extenders[$extender_class];
@@ -238,8 +234,7 @@ abstract class MigrateUIWizard {
    */
   abstract public function getSourceName();
 
-  public function __construct() {
-  }
+  public function __construct() {}
 
   /**
    * Add a wizard extender.
@@ -378,10 +373,9 @@ abstract class MigrateUIWizard {
     $form['title'] = array(
       '#prefix' => '<h2>',
       '#markup' => t('Step @step: @step_name',
-        array(
-          '@step' => $this->stepNumber,
-          '@step_name' => $this->currentStep->getName(),
-        )),
+          array(
+                '@step' => $this->stepNumber,
+                '@step_name' => $this->currentStep->getName())),
       '#suffix' => '</h2>',
     );
 
@@ -465,11 +459,11 @@ abstract class MigrateUIWizard {
       // called.
       if (is_subclass_of($info['class_name'], 'Migration')) {
         Migration::registerMigration($info['class_name'], $machine_name,
-          $info['arguments']);
+                $info['arguments']);
       }
       else {
         MigrationBase::registerMigration($info['class_name'], $machine_name,
-          $info['arguments']);
+                $info['arguments']);
       }
     };
     menu_rebuild();
@@ -485,10 +479,7 @@ abstract class MigrateUIWizard {
     foreach ($migrations as $migration) {
       $group_name = $migration->getGroup()->getName();
       if ($group_name == $this->groupName) {
-        $operations[] = array(
-          'migrate_ui_batch',
-          array('import', $migration->getMachineName(), NULL, 0),
-        );
+        $operations[] = array('migrate_ui_batch', array('import', $migration->getMachineName(), NULL, 0));
       }
     }
 
@@ -553,7 +544,6 @@ abstract class MigrateUIWizard {
  * Class representing one step of a wizard.
  */
 class MigrateUIStep {
-
   /**
    * A translatable string briefly describing this step, to be used in the page
    * title for the step form.
@@ -561,7 +551,6 @@ class MigrateUIStep {
    * @var string
    */
   protected $name;
-
   public function getName() {
     return $this->name;
   }
@@ -572,7 +561,6 @@ class MigrateUIStep {
    * @var string
    */
   protected $formMethod;
-
   public function getFormMethod() {
     return $this->formMethod;
   }
@@ -584,11 +572,9 @@ class MigrateUIStep {
    * @var array
    */
   protected $formValues;
-
   public function getFormValues() {
     return $this->formValues;
   }
-
   public function setFormValues($form_values) {
     $this->formValues = $form_values;
   }
@@ -601,7 +587,6 @@ class MigrateUIStep {
    * @var mixed
    */
   protected $context;
-
   public function getContext() {
     return $this->context;
   }
@@ -642,7 +627,6 @@ class MigrateUIStep {
  *
  */
 abstract class MigrateUIWizardExtender {
-
   /**
    * Reference to the wizard object that this extender applies to.
    */

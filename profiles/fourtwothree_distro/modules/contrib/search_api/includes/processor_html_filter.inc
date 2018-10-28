@@ -101,7 +101,7 @@ class SearchApiHtmlFilter extends SearchApiAbstractProcessor {
       $value = $this->parseText($text);
     }
     else {
-      $value = html_entity_decode(strip_tags($text));
+      $value = strip_tags($text);
       // Remove any multiple or leading/trailing spaces we might have introduced.
       $value = preg_replace('/\s\s+/', ' ', trim($value));
     }
@@ -120,9 +120,7 @@ class SearchApiHtmlFilter extends SearchApiAbstractProcessor {
         );
       }
       $text = substr($text, $pos + 1);
-      if (!preg_match('#^(/?)([:_a-zA-Z][-:_a-zA-Z0-9.]*)#', $text, $m)) {
-        continue;
-      }
+      preg_match('#^(/?)([-:_a-zA-Z]+)#', $text, $m);
       $text = substr($text, strpos($text, '>') + 1);
       if ($m[1]) {
         // Closing tag.

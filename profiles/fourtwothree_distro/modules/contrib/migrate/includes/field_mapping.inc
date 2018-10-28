@@ -7,7 +7,6 @@
  */
 
 class MigrateFieldMapping {
-
   /**
    * Destination field name for the mapping. If empty, the mapping is just a
    * stub for annotating the source field.
@@ -15,7 +14,6 @@ class MigrateFieldMapping {
    * @var string
    */
   protected $destinationField;
-
   public function getDestinationField() {
     return $this->destinationField;
   }
@@ -27,7 +25,6 @@ class MigrateFieldMapping {
    * @var string
    */
   protected $sourceField;
-
   public function getSourceField() {
     return $this->sourceField;
   }
@@ -36,15 +33,11 @@ class MigrateFieldMapping {
    * @var int
    */
   const MAPPING_SOURCE_CODE = 1;
-
   const MAPPING_SOURCE_DB = 2;
-
   protected $mappingSource = self::MAPPING_SOURCE_CODE;
-
   public function getMappingSource() {
     return $this->mappingSource;
   }
-
   public function setMappingSource($mapping_source) {
     $this->mappingSource = $mapping_source;
   }
@@ -57,7 +50,6 @@ class MigrateFieldMapping {
    * @var mixed
    */
   protected $defaultValue;
-
   public function getDefaultValue() {
     return $this->defaultValue;
   }
@@ -69,7 +61,6 @@ class MigrateFieldMapping {
    * @var string
    */
   protected $separator;
-
   public function getSeparator() {
     return $this->separator;
   }
@@ -83,7 +74,6 @@ class MigrateFieldMapping {
    *   An array of source migrations, or string for a single migration.
    */
   protected $sourceMigration;
-
   public function getSourceMigration() {
     return $this->sourceMigration;
   }
@@ -94,7 +84,6 @@ class MigrateFieldMapping {
    * @var string
    */
   protected $callbacks = array();
-
   public function getCallbacks() {
     return $this->callbacks;
   }
@@ -110,7 +99,6 @@ class MigrateFieldMapping {
    * @var string
    */
   protected $dedupe;
-
   public function getDedupe() {
     return $this->dedupe;
   }
@@ -118,49 +106,41 @@ class MigrateFieldMapping {
   /**
    * Argument overrides. If present this will be an array, keyed by
    * a field API array key, with one or both of these entries:
-   * 'source_field' - Name of the source field in the incoming row containing
-   * the value to be assigned
-   * 'default_value' - A constant value to be assigned in the absence of
-   * source_field Deprecated - subfield notation is now preferred.
+   * 'source_field' - Name of the source field in the incoming row containing the
+   *  value to be assigned
+   * 'default_value' - A constant value to be assigned in the absence of source_field
+   * Deprecated - subfield notation is now preferred.
    *
    * @var array
    */
   protected $arguments;
-
   public function getArguments() {
     return $this->arguments;
   }
 
   protected $description = '';
-
   public function getDescription() {
     return $this->description;
   }
 
   protected $issueGroup;
-
   public function getIssueGroup() {
     return $this->issueGroup;
   }
 
   protected $issueNumber;
-
   public function getIssueNumber() {
     return $this->issueNumber;
   }
 
   protected $issuePriority = self::ISSUE_PRIORITY_OK;
-
   public function getIssuePriority() {
     return $this->issuePriority;
   }
 
   const ISSUE_PRIORITY_OK = 1;
-
   const ISSUE_PRIORITY_LOW = 2;
-
   const ISSUE_PRIORITY_MEDIUM = 3;
-
   const ISSUE_PRIORITY_BLOCKER = 4;
 
   public static $priorities = array();
@@ -197,17 +177,7 @@ class MigrateFieldMapping {
   }
 
   public function callbacks($callbacks) {
-    foreach (func_get_args() as $callback) {
-      $this->callback($callback);
-    }
-    return $this;
-  }
-
-  public function callback($callback) {
-    $this->callbacks[] = array(
-      'callback' => $callback,
-      'params' => array_slice(func_get_args(), 1),
-    );
+    $this->callbacks = func_get_args();
     return $this;
   }
 

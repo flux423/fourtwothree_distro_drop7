@@ -86,9 +86,7 @@ class SearchApiStopWords extends SearchApiAbstractProcessor {
   }
 
   /**
-   * Retrieves the processor's configured stopwords.
-   *
-   * @return array
+   * @return
    *   An array whose keys are the stopwords set in either the file or the text
    *   field.
    */

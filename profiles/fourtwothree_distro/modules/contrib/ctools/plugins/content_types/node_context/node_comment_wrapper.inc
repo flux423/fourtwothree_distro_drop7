@@ -1,9 +1,5 @@
 <?php
 
-/**
- * @file
- */
-
 if (module_exists('comment')) {
   /**
    * Plugins are described by creating a $plugin array which will be used
@@ -27,10 +23,10 @@ if (module_exists('comment')) {
  * Render the node comments.
  */
 function ctools_node_comment_wrapper_content_type_render($subtype, $conf, $panel_args, $context) {
-  $node = isset($context->data) ? clone $context->data : NULL;
+  $node = isset($context->data) ? clone($context->data) : NULL;
   $block = new stdClass();
   $block->module = 'comments';
-  $block->delta = $node->nid;
+  $block->delta  = $node->nid;
 
   $renderable = array(
     '#theme' => 'comment_wrapper__node_' . $node->type,
@@ -69,7 +65,7 @@ function ctools_node_comment_wrapper_content_type_render($subtype, $conf, $panel
       );
       $renderable['comment_form'] = drupal_build_form('comment_node_' . $node->type . '_form', $form_state);
     }
-    elseif (!empty($conf['anon_links'])) {
+    else if (!empty($conf['anon_links'])) {
       $renderable['comment_form'] = theme('comment_post_forbidden', array('node' => $node));
     }
   }
@@ -81,7 +77,7 @@ function ctools_node_comment_wrapper_content_type_render($subtype, $conf, $panel
 
 /**
  * Returns an edit form for the comment wrapper.
- */
+ */ 
 function ctools_node_comment_wrapper_content_type_edit_form($form, &$form_state) {
   $conf = $form_state['conf'];
   $form['mode'] = array(
@@ -94,8 +90,7 @@ function ctools_node_comment_wrapper_content_type_edit_form($form, &$form_state)
   foreach (_comment_per_page() as $i) {
     $options[$i] = t('!a comments per page', array('!a' => $i));
   }
-  $form['comments_per_page'] = array(
-    '#type' => 'select',
+  $form['comments_per_page'] = array('#type' => 'select',
     '#title' => t('Pager'),
     '#default_value' => $conf['comments_per_page'],
     '#options' => $options,

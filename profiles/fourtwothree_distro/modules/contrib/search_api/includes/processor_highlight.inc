@@ -51,7 +51,6 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
       'excerpt' => TRUE,
       'excerpt_length' => 256,
       'highlight' => 'always',
-      'highlight_partial' => FALSE,
       'exclude_fields' => array(),
     );
 
@@ -87,12 +86,12 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
         ),
       ),
     );
-    // Exclude certain fulltext fields.
+    // Exclude certain fulltextfields
     $fields = $this->index->getFields();
     $fulltext_fields = array();
     foreach ($this->index->getFulltextFields() as $field) {
       if (isset($fields[$field])) {
-        $fulltext_fields[$field] = check_plain($fields[$field]['name'] . ' (' . $field . ')');
+        $fulltext_fields[$field] = $fields[$field]['name'] . ' (' . $field . ')';
       }
     }
     $form['exclude_fields'] = array(
@@ -113,13 +112,6 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
         'never' => t('Never'),
       ),
       '#default_value' => $this->options['highlight'],
-    );
-
-    $form['highlight_partial'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Highlight partial matches'),
-      '#description' => t('When enabled, matches in parts of words will be highlighted as well.'),
-      '#default_value' => $this->options['highlight_partial'],
     );
 
     return $form;
@@ -166,14 +158,13 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
       if ($this->options['highlight'] != 'never') {
         $fields = $this->getFulltextFields($response['results'], $id, $fulltext_fields, $this->options['highlight'] == 'always');
         foreach ($fields as $field => $data) {
-          $result['fields'][$field] = array('#sanitize_callback' => FALSE);
           if (is_array($data)) {
             foreach ($data as $i => $text) {
-              $result['fields'][$field]['#value'][$i] = $this->highlightField($text, $keys);
+              $result['fields'][$field][$i] = $this->highlightField($text, $keys);
             }
           }
           else {
-            $result['fields'][$field]['#value'] = $this->highlightField($data, $keys);
+            $result['fields'][$field] = $this->highlightField($data, $keys);
           }
         }
       }
@@ -209,10 +200,9 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
     // We only need detailed fields data if $load is TRUE.
     $fields = $load ? $this->index->getFields() : array();
     $needs_extraction = array();
-    $returned_fields = search_api_get_sanitized_field_values(array_intersect_key($result['fields'], array_flip($fulltext_fields)));
     foreach ($fulltext_fields as $field) {
-      if (array_key_exists($field, $returned_fields)) {
-        $data[$field] = $returned_fields[$field];
+      if (array_key_exists($field, $result['fields'])) {
+        $data[$field] = $result['fields'][$field];
       }
       elseif ($load) {
         $needs_extraction[$field] = $fields[$field];
@@ -235,7 +225,7 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
     }
     $wrapper = $this->index->entityWrapper($result['entity'], FALSE);
     $wrapper->language($language->language);
-    $extracted = search_api_extract_fields($wrapper, $needs_extraction, array('sanitize' => TRUE));
+    $extracted = search_api_extract_fields($wrapper, $needs_extraction);
 
     foreach ($extracted as $field => $info) {
       if (isset($info['value'])) {
@@ -330,9 +320,9 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
     $ranges = array();
     $included = array();
     $length = 0;
-    $work_keys = $keys;
-    while ($length < $this->options['excerpt_length'] && $work_keys) {
-      foreach ($work_keys as $k => $key) {
+    $workkeys = $keys;
+    while ($length < $this->options['excerpt_length'] && count($workkeys)) {
+      foreach ($workkeys as $k => $key) {
         if ($length >= $this->options['excerpt_length']) {
           break;
         }
@@ -344,15 +334,8 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
         // Locate a keyword (position $p, always >0 because $text starts with a
         // space).
         $p = 0;
-        if (empty($this->options['highlight_partial'])) {
-          $regex = '/' . self::$boundary . preg_quote($key, '/') . self::$boundary . '/iu';
-          if (preg_match($regex, $text, $match, PREG_OFFSET_CAPTURE, $included[$key])) {
-            $p = $match[0][1];
-          }
-        }
-        else {
-          $function = function_exists('mb_stripos') ? 'mb_stripos' : 'stripos';
-          $p = $function($text, $key, $included[$key]);
+        if (preg_match('/' . self::$boundary . preg_quote($key, '/') . self::$boundary . '/iu', $text, $match, PREG_OFFSET_CAPTURE, $included[$key])) {
+          $p = $match[0][1];
         }
         // Now locate a space in front (position $q) and behind it (position $s),
         // leaving about 60 characters extra before and after for context.
@@ -367,13 +350,18 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
               $ranges[$q] = $p + $s;
               $length += $p + $s - $q;
               $included[$key] = $p + 1;
-              continue;
+            }
+            else {
+              unset($workkeys[$k]);
             }
           }
+          else {
+            unset($workkeys[$k]);
+          }
         }
-        // Unless we got a match above, we don't need to look for this key any
-        // more.
-        unset($work_keys[$k]);
+        else {
+          unset($workkeys[$k]);
+        }
       }
     }
 
@@ -447,14 +435,10 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
       }
       return implode('', $texts);
     }
+    $replace = $this->options['prefix'] . '\0' . $this->options['suffix'];
 
     $keys = implode('|', array_map('preg_quote', $keys, array_fill(0, count($keys), '/')));
-    // If "Highlight partial matches" is disabled, we only want to highlight
-    // matches that are complete words. Otherwise, we want all of them.
-    $boundary = empty($this->options['highlight_partial']) ? self::$boundary : '';
-    $regex = '/' . $boundary . '(?:' . $keys . ')' . $boundary . '/iu';
-    $replace = $this->options['prefix'] . '\0' . $this->options['suffix'];
-    $text = preg_replace($regex, $replace, ' ' . $text . ' ');
+    $text = preg_replace('/' . self::$boundary . '(' . $keys . ')' . self::$boundary . '/iu', $replace, ' ' . $text . ' ');
     return substr($text, 1, -1);
   }
 
@@ -464,12 +448,12 @@ class SearchApiHighlight extends SearchApiAbstractProcessor {
    * @param array $array
    *   The array to flatten.
    * @param string $glue
-   *   (optional) The separator to insert between individual array items.
+   *   The separator to insert between individual array items.
    *
    * @return string
    *   The glued string.
    */
-  protected function flattenArrayValues(array $array, $glue = " \n\n ") {
+  protected function flattenArrayValues(array $array, $glue = "\n\n") {
     $ret = array();
     foreach ($array as $item) {
       if (is_array($item)) {

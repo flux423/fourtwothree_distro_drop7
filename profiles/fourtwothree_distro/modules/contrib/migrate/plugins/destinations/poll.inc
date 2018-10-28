@@ -21,8 +21,7 @@
  * public function prepareRow($row);
  *   $choices =  Database::getConnection('default', 'legacy')
  *               ->select('src_poll_choice', 'c')
- *               ->fields('c', array('choice_label', 'choice_order',
- *   'choice_total'))
+ *               ->fields('c', array('choice_label', 'choice_order', 'choice_total'))
  *               ->condition('c.choiceid', $row->src_contentid);
  *               ->execute();
  *   $row->src_choices = array();
@@ -39,8 +38,7 @@
  *             ->select('src_poll_vote', 'v')
  *             ->fields('v', array('choice_uid', 'hostname', 'timestamp'))
  *             ->condition('v.choiceid', $row->src_contentid);
- *   $votes = $query->innerJoin('src_poll_choice', 'c',
- *   'v.choice_id=c.choice_id')
+ *   $votes = $query->innerJoin('src_poll_choice', 'c', 'v.choice_id=c.choice_id')
  *            ->fields('c', array('choice_label'))
  *            ->execute();
  *   $row->src_votes = array();
@@ -58,7 +56,6 @@
  */
 
 class MigratePollEntityHandler extends MigrateDestinationHandler {
-
   public function __construct() {
     $this->registerTypes(array('node'));
   }
@@ -95,10 +92,7 @@ class MigratePollEntityHandler extends MigrateDestinationHandler {
       foreach ($row->choice as $choice) {
         // Have no mapping tracking for chid, so assume choice text is unique.
         db_update('poll_choice')
-          ->fields(array(
-            'chvotes' => $choice['chvotes'],
-            'weight' => $choice['weight'],
-          ))
+          ->fields(array('chvotes' => $choice['chvotes'], 'weight' => $choice['weight']))
           ->condition('nid', $entity->nid)
           ->condition('chtext', $choice['chtext'])
           ->execute();
@@ -108,10 +102,10 @@ class MigratePollEntityHandler extends MigrateDestinationHandler {
       foreach ($row->votes as $vote) {
         if (!isset($vote['chid'])) {
           $result = db_select('poll_choice', 'pc')
-            ->fields('pc', array('chid'))
-            ->condition('pc.nid', $entity->nid)
-            ->condition('pc.chtext', $vote['chtext'])
-            ->execute();
+                  ->fields('pc', array('chid'))
+                  ->condition('pc.nid', $entity->nid)
+                  ->condition('pc.chtext', $vote['chtext'])
+                  ->execute();
           $chid = $result->fetchField();
         }
         else {

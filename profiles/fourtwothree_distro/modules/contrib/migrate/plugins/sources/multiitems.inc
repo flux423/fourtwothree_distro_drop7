@@ -14,9 +14,7 @@
  * to obtain the data for a given migratable item given its ID.
  */
 abstract class MigrateItems {
-
-  public function __construct() {
-  }
+  public function __construct() {}
 
   /**
    * Implementors are expected to return a string representing where the listing
@@ -35,8 +33,7 @@ abstract class MigrateItems {
   abstract public function getIdList();
 
   /**
-   * Implementors are expected to return a count of IDs available to be
-   * migrated.
+   * Implementors are expected to return a count of IDs available to be migrated.
    *
    * @return int
    */
@@ -73,7 +70,6 @@ abstract class MigrateItems {
  * IDs provided by a MigrateItems and retrieving data from a MigrateItems.
  */
 class MigrateSourceMultiItems extends MigrateSource {
-
   /**
    * MigrateItems object used to obtain the list of IDs and source for
    * all objects.
@@ -141,7 +137,7 @@ class MigrateSourceMultiItems extends MigrateSource {
    * @return int
    */
   public function computeCount() {
-    // @API: Support old count method for now.
+      // @API: Support old count method for now.
     if (method_exists($this->itemsClass, 'computeCount')) {
       return $this->itemsClass->computeCount();
     }
@@ -160,8 +156,8 @@ class MigrateSourceMultiItems extends MigrateSource {
     if ($this->idList) {
       $this->idsToProcess = $this->idList;
     }
-    elseif (!$this->idsToProcess = $this->itemsClass->getIdList()) {
-      $this->idsToProcess = array();
+    else {
+      $this->idsToProcess = $this->itemsClass->getIdList();
     }
     $this->idIterator = ($this->idsToProcess instanceof Iterator) ?
       $this->idsToProcess : new ArrayIterator($this->idsToProcess);

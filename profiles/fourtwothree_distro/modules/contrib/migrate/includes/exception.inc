@@ -6,14 +6,11 @@
  */
 
 class MigrateException extends Exception {
-
   /**
    * The level of the error being reported (a Migration::MESSAGE_* constant)
-   *
    * @var int
    */
   protected $level;
-
   public function getLevel() {
     return $this->level;
   }
@@ -25,7 +22,6 @@ class MigrateException extends Exception {
    * @var int
    */
   protected $status;
-
   public function getStatus() {
     return $this->status;
   }

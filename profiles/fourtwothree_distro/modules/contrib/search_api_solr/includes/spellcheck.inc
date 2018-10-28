@@ -23,10 +23,8 @@ class SearchApiSpellcheckSolr extends SearchApiSpellcheck {
     if (isset($response->spellcheck->suggestions)) {
       $suggestions = $response->spellcheck->suggestions;
       foreach ($suggestions as $word => $data) {
-        if (isset($data->suggestion)) {
-          foreach ($data->suggestion as $suggestion) {
-            $this->addSuggestion(new SearchApiSpellcheckSuggestion($word, $suggestion));
-          }
+        foreach ($data->suggestion as $suggestion) {
+          $this->addSuggestion(new SearchApiSpellcheckSuggestion($word, $suggestion));
         }
       }
     }

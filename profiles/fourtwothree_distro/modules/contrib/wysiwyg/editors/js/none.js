@@ -15,28 +15,26 @@
  */
 Drupal.wysiwyg.editor.attach.none = function(context, params, settings) {
   if (params.resizable) {
-    var $wrapper = $('#' + params.field, context).parents('.form-textarea-wrapper:first');
+    var $wrapper = $('#' + params.field).parents('.form-textarea-wrapper:first');
     $wrapper.addClass('resizable');
     if (Drupal.behaviors.textarea) {
-      Drupal.behaviors.textarea.attach(context);
+      Drupal.behaviors.textarea.attach();
     }
   }
 };
 
 /**
- * Detach a single editor instance.
+ * Detach a single or all editors.
  *
  * The editor syncs its contents back to the original field before its instance
  * is removed.
  *
- * In here, 'this' is an instance of WysiwygInternalInstance.
- * See Drupal.wysiwyg.editor.instance.none for more details.
- *
  * @param context
  *   A DOM element, supplied by Drupal.attachBehaviors().
  * @param params
- *   An object containing input format parameters. Only the editor instance in
- *   params.field should be detached and saved, so its data can be submitted in
+ *   (optional) An object containing input format parameters. If defined,
+ *   only the editor instance in params.field should be detached. Otherwise,
+ *   all editors should be detached and saved, so they can be submitted in
  *   AJAX/AHAH applications.
  * @param trigger
  *   A string describing why the editor is being detached.
@@ -49,9 +47,9 @@ Drupal.wysiwyg.editor.attach.none = function(context, params, settings) {
  * @see Drupal.detachBehaviors
  */
 Drupal.wysiwyg.editor.detach.none = function (context, params, trigger) {
-  if (trigger != 'serialize') {
-    var $wrapper = $('#' + params.field, context).parents('.form-textarea-wrapper:first');
-    $wrapper.removeOnce('textarea').removeClass('.resizable-textarea').removeClass('resizable')
+  if (typeof params != 'undefined' && (trigger != 'serialize')) {
+    var $wrapper = $('#' + params.field).parents('.form-textarea-wrapper:first');
+    $wrapper.removeOnce('textarea').removeClass('.resizable-textarea')
       .find('.grippie').remove();
   }
 };

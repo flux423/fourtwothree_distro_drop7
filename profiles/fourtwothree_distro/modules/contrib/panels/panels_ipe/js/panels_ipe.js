@@ -26,17 +26,6 @@ Drupal.PanelsIPE = {
 
 Drupal.behaviors.PanelsIPE = {
   attach: function(context) {
-    // Remove any old editors.
-    for (var i in Drupal.PanelsIPE.editors) {
-      if (Drupal.settings.PanelsIPECacheKeys.indexOf(i) === -1) {
-        // Clean-up a little bit and remove it.
-        Drupal.PanelsIPE.editors[i].editing = false;
-        Drupal.PanelsIPE.editors[i].changed = false;
-        delete Drupal.PanelsIPE.editors[i];
-      }
-    }
-
-    // Initialize new editors.
     for (var i in Drupal.settings.PanelsIPECacheKeys) {
       var key = Drupal.settings.PanelsIPECacheKeys[i];
       $('div#panels-ipe-display-' + key + ':not(.panels-ipe-processed)')
@@ -50,7 +39,7 @@ Drupal.behaviors.PanelsIPE = {
           Drupal.PanelsIPE.editors[key].showContainer();
         });
     }
-    $('.panels-ipe-hide-bar').once('panels-ipe-hide-bar').click(function() {
+    $('.panels-ipe-hide-bar').once('panels-ipe-hide-bar-processed').click(function() {
       Drupal.PanelsIPE.editors[key].hideContainer();
     });
     Drupal.PanelsIPE.bindClickDelete(context);
@@ -83,7 +72,6 @@ function DrupalPanelsIPE(cache_key, cfg) {
     items: 'div.panels-ipe-portlet-wrapper',
     handle: 'div.panels-ipe-draghandle',
     cancel: '.panels-ipe-nodrag',
-    tolerance: 'pointer',
     dropOnEmpty: true
   }, cfg.sortableOptions || {});
 
@@ -220,8 +208,6 @@ function DrupalPanelsIPE(cache_key, cfg) {
 
     $('div.panels-ipe-sort-container', ipe.topParent).bind('sortstop', this.enableRegions);
 
-    // Refresh the control jQuery object.
-    ipe.control = $(ipe.control.selector);
     $('.panels-ipe-form-container', ipe.control).append(formdata);
 
     $('input:submit:not(.ajax-processed), button:not(.ajax-processed)', ipe.control).addClass('ajax-processed').each(function() {
@@ -242,7 +228,7 @@ function DrupalPanelsIPE(cache_key, cfg) {
     // it clears out inline styles.
     $('.panels-ipe-on').show();
     ipe.showForm();
-    $('body').add(ipe.topParent).addClass('panels-ipe-editing');
+    ipe.topParent.addClass('panels-ipe-editing');
 
   };
 
@@ -272,10 +258,6 @@ function DrupalPanelsIPE(cache_key, cfg) {
     $('.panels-ipe-form-container').empty();
     // Re-show all the IPE non-editing meta-elements
     $('div.panels-ipe-off').show('fast');
-
-    // Refresh the container and control jQuery objects.
-    ipe.container = $(ipe.container.selector);
-    ipe.control = $(ipe.control.selector);
 
     ipe.showButtons();
     // Re-hide all the IPE meta-elements
@@ -312,7 +294,6 @@ function DrupalPanelsIPE(cache_key, cfg) {
       // @todo this isn't ideal but I can't seem to figure out how to keep an unprocessed backup
       // that will later get processed.
       $('.ctools-use-modal-processed', ipe.topParent).removeClass('ctools-use-modal-processed');
-      $('.panels-ipe-hide-bar-processed', ipe.topParent).removeClass('panels-ipe-hide-bar-processed');
       $('.pane-delete-processed', ipe.topParent).removeClass('pane-delete-processed');
       ipe.topParent.fadeIn('medium');
       Drupal.attachBehaviors();

@@ -9,7 +9,6 @@
  * Destination class implementing migration into {block_custom}.
  */
 class MigrateDestinationCustomBlock extends MigrateDestination {
-
   static public function getKeySchema() {
     return array(
       'bid' => array(
@@ -20,7 +19,6 @@ class MigrateDestinationCustomBlock extends MigrateDestination {
       ),
     );
   }
-
   public function __construct() {
     parent::__construct();
   }
@@ -35,7 +33,6 @@ class MigrateDestinationCustomBlock extends MigrateDestination {
    *
    * @param Migration $migration
    *  Optionally, the migration containing this destination.
-   *
    * @return array
    *  Keys: machine names of the fields (to be passed to addFieldMapping)
    *  Values: Human-friendly descriptions of the fields.
@@ -54,11 +51,9 @@ class MigrateDestinationCustomBlock extends MigrateDestination {
    * Import a single row.
    *
    * @param $block
-   *  Custom block object to build. Prefilled with any fields mapped in the
-   *   Migration.
+   *  Custom block object to build. Prefilled with any fields mapped in the Migration.
    * @param $row
    *  Raw source data object - passed through to prepare/complete handlers.
-   *
    * @return array
    *  Array of key fields of the object that was saved if
    *  successful. FALSE on failure.
@@ -235,17 +230,8 @@ class MigrateDestinationCustomBlock extends MigrateDestination {
 
   public function deleteMultipleCustomBlocks(array $bids) {
     db_delete('block_custom')->condition('bid', $bids, 'IN')->execute();
-    db_delete('block')
-      ->condition('module', 'block')
-      ->condition('delta', $bids, 'IN')
-      ->execute();
-    db_delete('block_role')
-      ->condition('module', 'block')
-      ->condition('delta', $bids, 'IN')
-      ->execute();
-    db_delete('block_node_type')
-      ->condition('module', 'block')
-      ->condition('delta', $bids, 'IN')
-      ->execute();
+    db_delete('block')->condition('module', 'block')->condition('delta', $bids, 'IN')->execute();
+    db_delete('block_role')->condition('module', 'block')->condition('delta', $bids, 'IN')->execute();
+    db_delete('block_node_type')->condition('module', 'block')->condition('delta', $bids, 'IN')->execute();
   }
 }

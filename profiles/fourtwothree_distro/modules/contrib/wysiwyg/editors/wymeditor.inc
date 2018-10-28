@@ -11,38 +11,30 @@
 function wysiwyg_wymeditor_editor() {
   $editor['wymeditor'] = array(
     'title' => 'WYMeditor',
-    'vendor url' => 'http://wymeditor.github.io/wymeditor/',
-    'download url' => 'https://github.com/wymeditor/wymeditor/releases',
-    'library path' => wysiwyg_get_path('wymeditor'),
+    'vendor url' => 'http://www.wymeditor.org/',
+    'download url' => 'http://www.wymeditor.org/download/',
+    'library path' => wysiwyg_get_path('wymeditor') . '/wymeditor',
     'libraries' => array(
       'min' => array(
         'title' => 'Minified',
         'files' => array('jquery.wymeditor.min.js'),
+      ),
+      'pack' => array(
+        'title' => 'Packed',
+        'files' => array('jquery.wymeditor.pack.js'),
       ),
       'src' => array(
         'title' => 'Source',
         'files' => array('jquery.wymeditor.js'),
       ),
     ),
-    'verified version range' => array('0.5', '1.1.1'),
     'version callback' => 'wysiwyg_wymeditor_version',
     'themes callback' => 'wysiwyg_wymeditor_themes',
-    'settings form callback' => 'wysiwyg_wymeditor_settings_form',
     'settings callback' => 'wysiwyg_wymeditor_settings',
-    'plugin callback' => '_wysiwyg_wymeditor_plugins',
+    'plugin callback' => 'wysiwyg_wymeditor_plugins',
     'versions' => array(
       '0.5-rc1' => array(
-        'library path' => wysiwyg_get_path('wymeditor') . '/wymeditor',
         'js files' => array('wymeditor.js'),
-      ),
-      '1.0.0a1' => array(
-        'library path' => wysiwyg_get_path('wymeditor') . '/wymeditor',
-        'js files' => array('wymeditor-1.js'),
-        'css files' => array('wymeditor.css'),
-      ),
-      '1.0.0b5' => array(
-        'js files' => array('wymeditor-1.js'),
-        'css files' => array('wymeditor.css'),
       ),
     ),
   );
@@ -59,23 +51,16 @@ function wysiwyg_wymeditor_editor() {
  *   The installed editor version.
  */
 function wysiwyg_wymeditor_version($editor) {
-  $script = $editor['library path'] . '/wymeditor/jquery.wymeditor.js';
-  if (!file_exists($script)) {
-    $script = $editor['library path'] . '/jquery.wymeditor.js';
-    if (!file_exists($script)) {
-      return;
-    }
-  }
+  $script = $editor['library path'] . '/jquery.wymeditor.js';
   if (!file_exists($script)) {
     return;
   }
   $script = fopen($script, 'r');
-  for ($i = 0; $i < 189; $i++) {
-    $line = fgets($script);
-    if (preg_match('@version\s+([0-9\.]+(?:-?[a-z0-9\.]+)?[^\.])@', $line, $version)) {
-      fclose($script);
-      return $version[1];
-    }
+  fgets($script);
+  $line = fgets($script);
+  if (preg_match('@version\s+([0-9a-z\.-]+)@', $line, $version)) {
+    fclose($script);
+    return $version[1];
   }
   fclose($script);
 }
@@ -94,30 +79,6 @@ function wysiwyg_wymeditor_version($editor) {
  */
 function wysiwyg_wymeditor_themes($editor, $profile) {
   return array('compact', 'default', 'minimal', 'silver', 'twopanels');
-}
-
-/**
- * Enhances the editor profile settings form for WYMeditor.
- *
- * @see http://wymeditor.readthedocs.org/en/latest/version_1.0_and_0.5/getting_started/customize.html
- */
-function wysiwyg_wymeditor_settings_form(&$form, &$form_state) {
-  $profile = $form_state['wysiwyg_profile'];
-  $settings = $profile->settings;
-  $settings += array(
-    'block_formats' => 'p,blockquote,pre,h2,h3,h4,h5,h6,div',
-  );
-
-  $form['css']['#description'] = t('Note: WYMeditor can only load a single stylesheet into the editor.');
-
-  $form['css']['block_formats'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Block formats'),
-    '#default_value' => $settings['block_formats'],
-    '#size' => 40,
-    '#maxlength' => 250,
-    '#description' => t('Comma separated list of HTML block formats. Possible values: <code>@format-list</code>.', array('@format-list' => 'p,h1,h2,h3,h4,h5,h6,blockquote,pre,th')),
-  );
 }
 
 /**
@@ -140,20 +101,11 @@ function wysiwyg_wymeditor_settings($editor, $config, $theme) {
   $settings = array(
     'basePath' => base_path() . $editor['library path'] . '/',
     'wymPath' => $editor['libraries'][$library]['files'][0],
-    // WYMeditor's update event handler will revert the field contents if
-    // changes were made after it was detached. Wysiwyg takes care of submit
-    // events anyway so make sure WYMeditor does not bind it anywhere.
-    'updateSelector' => '#wysiwyg-no-element',
-    'updateEvent' => 'wysiwyg-no-event',
+    // @todo Does not work in Drupal; jQuery can live anywhere.
+    'jQueryPath' => base_path() . 'misc/jquery.js',
+    'updateSelector' => '.form-submit',
     'skin' => $theme,
   );
-  if (version_compare($editor['installed version'], '1.0.0-b5', '>=')) {
-    drupal_add_css(wysiwyg_get_path('wymeditor') . '/skins/' . $settings['skin'] . '/skin.css');
-  }
-  else {
-    // @todo Does not work in Drupal; jQuery can live anywhere.
-    $settings['jQueryPath'] = base_path() . 'misc/jquery.js';
-  }
 
   if (isset($config['language'])) {
     $settings['lang'] = $config['language'];
@@ -162,7 +114,7 @@ function wysiwyg_wymeditor_settings($editor, $config, $theme) {
   // Add configured buttons.
   $settings['toolsItems'] = array();
   if (!empty($config['buttons'])) {
-    $buttoninfo = _wysiwyg_wymeditor_button_info($editor['installed version']);
+    $buttoninfo = _wysiwyg_wymeditor_button_info();
     $plugins = wysiwyg_get_plugins($editor['name']);
     foreach ($config['buttons'] as $plugin => $buttons) {
       foreach ($buttons as $button => $enabled) {
@@ -206,7 +158,7 @@ function wysiwyg_wymeditor_settings($editor, $config, $theme) {
       'blockquote' => 'Blockquote',
       'th' => 'Table_Header',
     );
-    foreach (explode(',', preg_replace('@\s+@', '', $config['block_formats'])) as $tag) {
+    foreach (explode(',', $config['block_formats']) as $tag) {
       if (isset($containers[$tag])) {
         $settings['containersItems'][] = array(
           'name' => strtoupper($tag),
@@ -217,19 +169,14 @@ function wysiwyg_wymeditor_settings($editor, $config, $theme) {
     }
   }
 
-  // Add editor content stylesheet.
   if (isset($config['css_setting'])) {
     if ($config['css_setting'] == 'theme') {
       // WYMeditor only supports one CSS file currently.
-      $css = wysiwyg_get_css(isset($config['css_theme']) ? $config['css_theme'] : '');
+      $css = wysiwyg_get_css();
       $settings['stylesheet'] = reset($css);
     }
     elseif ($config['css_setting'] == 'self' && isset($config['css_path'])) {
-      $settings['stylesheet'] = strtr($config['css_path'], array(
-        '%b' => base_path(),
-        '%t' => drupal_get_path('theme', variable_get('theme_default', NULL)),
-        '%q' => variable_get('css_js_query_string', ''),
-      ));
+      $settings['stylesheet'] = strtr($config['css_path'], array('%b' => base_path(), '%t' => drupal_get_path('theme', variable_get('theme_default', NULL))));
     }
   }
 
@@ -239,7 +186,7 @@ function wysiwyg_wymeditor_settings($editor, $config, $theme) {
 /**
  * Return internal plugins for this editor; semi-implementation of hook_wysiwyg_plugin().
  */
-function _wysiwyg_wymeditor_plugins($editor) {
+function wysiwyg_wymeditor_plugins($editor) {
   $plugins = array(
     'default' => array(
       'buttons' => array(
@@ -264,8 +211,8 @@ function _wysiwyg_wymeditor_plugins($editor) {
 /**
  * Helper function to provide additional meta-data for internal default buttons.
  */
-function _wysiwyg_wymeditor_button_info($version) {
-  $info = array(
+function _wysiwyg_wymeditor_button_info() {
+  return array(
     'Bold' => array('title' => 'Strong', 'css' => 'wym_tools_strong'),
     'Italic' => array('title' => 'Emphasis', 'css' => 'wym_tools_emphasis'),
     'Superscript' => array('title' => 'Superscript', 'css' => 'wym_tools_superscript'),
@@ -284,10 +231,4 @@ function _wysiwyg_wymeditor_button_info($version) {
     'ToggleHtml' => array('title' => 'HTML', 'css' => 'wym_tools_html'),
     'Preview' => array('title' => 'Preview', 'css' => 'wym_tools_preview'),
   );
-  if (version_compare($version, '1.0.0-rc2', '>=')) {
-    foreach (array('CreateLink', 'InsertImage', 'InsertTable', 'Paste', 'Preview') as $button) {
-      $info[$button]['css'] .= ' wym_opens_dialog';
-    }
-  }
-  return $info;
 }

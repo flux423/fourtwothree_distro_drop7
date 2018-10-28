@@ -72,8 +72,9 @@ Drupal.wysiwyg.editor.attach.whizzywig = function(context, params, settings) {
   wysiwygWhizzywig.currentField = params.field;
   wysiwygWhizzywig.fields[wysiwygWhizzywig.currentField] = '';
   // Whizzywig needs to have the width set 'inline'.
-  var $field = $('#' + params.field);
-  this.originalStyle = $field.attr('style');
+  $field = $('#' + params.field);
+  var originalValues = Drupal.wysiwyg.instances[params.field];
+  originalValues.originalStyle = $field.attr('style');
   $field.css('width', $field.width() + 'px');
 
   // Attach editor.
@@ -86,27 +87,35 @@ Drupal.wysiwyg.editor.attach.whizzywig = function(context, params, settings) {
  * Detach a single or all editors.
  */
 Drupal.wysiwyg.editor.detach.whizzywig = function (context, params, trigger) {
-  for (var index = 0; index < whizzies.length; index++) {
-    if (whizzies[index] !== this.field) {
-      continue;
-    }
-    var $field = $('#' + this.field);
+  var detach = function (index) {
+    var id = whizzies[index], $field = $('#' + id), instance = Drupal.wysiwyg.instances[id];
 
     // Save contents of editor back into textarea.
-    $field.val(this.getContent());
+    $field.val(instance.getContent());
     // If the editor is just being serialized (not detached), our work is done.
     if (trigger == 'serialize') {
       return;
     }
     // Remove editor instance.
-    $('#' + this.field + '-whizzywig').remove();
+    $('#' + id + '-whizzywig').remove();
     whizzies.splice(index, 1);
 
     // Restore original textarea styling.
-    if ('originalStyle' in this) {
-      $field.removeAttr('style').attr('style', this.originalStyle);
+    $field.removeAttr('style').attr('style', instance.originalStyle);
+  };
+
+  if (typeof params != 'undefined') {
+    for (var i = 0; i < whizzies.length; i++) {
+      if (whizzies[i] == params.field) {
+        detach(i);
+        break;
+      }
     }
-    break;
+  }
+  else {
+    while (whizzies.length > 0) {
+      detach(0);
+    }
   }
 };
 
@@ -133,13 +142,12 @@ Drupal.wysiwyg.editor.instance.whizzywig = {
   },
 
   getContent: function () {
-    var $field = $('#' + this.field);
     // Whizzywig's tidyH() expects a document node. Clone the editing iframe's
     // document so tidyH() won't mess with it if this gets called while editing.
     var clone = $($('#whizzy' + this.field).contents()[0].documentElement).clone()[0].ownerDocument;
     // Whizzywig shows the original textarea in source mode so update the body.
     if ($field.css('display') == 'block') {
-     clone.body.innerHTML = $field.val();
+     clone.body.innerHTML = $('#' + this.field).val();
     }
     return tidyH(clone);
   }

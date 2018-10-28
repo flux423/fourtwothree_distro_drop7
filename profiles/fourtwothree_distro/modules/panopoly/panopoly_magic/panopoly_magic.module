@@ -42,8 +42,22 @@ function panopoly_magic_init() {
   drupal_add_js($modal_style, 'setting');
 
   // Tell Javascript which 'Add content' preview mode we're using.
+  switch (variable_get('panopoly_magic_pane_add_preview', PANOPOLY_ADD_PREVIEW_DEFAULT)) {
+    case PANOPOLY_ADD_PREVIEW_SINGLE:
+      $pane_add_preview = 'single';
+      break;
+    case PANOPOLY_ADD_PREVIEW_DISABLED:
+      $pane_add_preview = 'disabled';
+      break;
+    case PANOPOLY_ADD_PREVIEW_AUTOMATIC:
+      $pane_add_preview = 'automatic';
+      break;
+    case PANOPOLY_ADD_PREVIEW_MANUAL:
+      $pane_add_preview = 'manual';
+      break;
+  }
   drupal_add_js(array('panopoly_magic' => array(
-    'pane_add_preview_mode' => _panopoly_magic_add_content_preview_mode_name(),
+    'pane_add_preview_mode' => $pane_add_preview,
   )), 'setting');
 }
 
@@ -272,9 +286,6 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
       $pane = $form_state['pane'];
     }
 
-    // To store arbitrary extra data for generating previews.
-    $extra = array();
-
     // Do some special processing for stylizer settings forms to ensure previews work correctly.
     if ($form_id == 'panels_edit_style_settings_form') {
 
@@ -368,40 +379,20 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
           $entity->fpid = NULL;
         }
 
-        // Process any field collection fields that may be present.
-        $field_collection_fields = _panopoly_magic_process_field_collection_fields('fieldable_panels_pane', $entity->bundle, $entity, $form, $form_state);
-
         field_attach_form_validate('fieldable_panels_pane', $entity, $form, $form_state);
         field_attach_submit('fieldable_panels_pane', $entity, $form, $form_state);
-
-        // Add back any field collection fields.
-        foreach ($field_collection_fields as $field_collection_field => $field_collection_value) {
-          $entity->$field_collection_field = $field_collection_value;
-        }
 
         // Set the callback to use for rendering the preview.
         $preview_callback = 'panopoly_magic_render_fieldable_panels_pane_preview';
 
         // Stash the entity stub for the preview content type.
-        $extra['fieldable_panels_pane'] = $entity;
+        $pane->configuration['fieldable_panels_pane'] = $entity;
       }
     }
 
     if ($form_id == 'fieldable_panels_panes_fieldable_panels_pane_content_type_edit_form') {
       // Hide the revision fieldset.
       $form['revision']['#access'] = FALSE;
-      // Hide the 'Admin' fieldset.
-      $form['admin']['#access'] = FALSE;
-      // Move the 'Admin title' under reusable like in FPP 1.8 and earlier.
-      $form['reusable']['admin_title'] = $form['admin']['admin_title'];
-      $form['reusable']['admin_title']['#states'] = array(
-        'visible' => array(
-          ':input[name="reusable"]' => array('checked' => TRUE),
-        )
-      );
-      unset($form['admin']['admin_title']);
-      // Move the warning down.
-      $form['reusable']['warning']['#weight'] = 100;
 
       // Add our own submit handler ALWAYS, not just when we are generating
       // a preview.
@@ -465,7 +456,6 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
         'context' => $context,
         'style' => $style,
         'display' => $display,
-        'extra' => $extra,
       );
 
       // Remove the clearfix for preview floating
@@ -513,12 +503,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
   if (strpos($form_id, 'content_type_edit_form') || $form_id == 'ctools_entity_field_content_type_formatter_options') {
     $form['buttons']['cancel']['#access'] = FALSE;
     if (!empty($form['buttons']['return'])) {
-      if ($form_state['op'] == 'add') {
-        $form['buttons']['return']['#value'] = t('Add');
-      }
-      else {
-        $form['buttons']['return']['#value'] = t('Save');
-      }
+      $form['buttons']['return']['#value'] = t('Save');
     }
     $form['buttons']['#weight'] = -99;
   }
@@ -606,50 +591,6 @@ function _panopoly_magic_add_path_to_ajax($element) {
 }
 
 /**
- * Process any field collection fields, returning psuedo values for them.
- */
-function _panopoly_magic_process_field_collection_fields($entity_type, $bundle, $entity, $form, &$form_state) {
-  $field_collection_fields = array();
-
-  $instances = field_info_instances($entity_type, $bundle);
-  foreach ($instances as $instance) {
-    $field_name = $instance['field_name'];
-    $field = field_info_field($field_name);
-    if ($field['type'] == 'field_collection') {
-      $langcode = entity_language($entity_type, $entity);
-      if (!$langcode) {
-        $langcode = LANGUAGE_NONE;
-      }
-
-      foreach (element_children($form[$field_name][$langcode]) as $index) {
-        // Only address the numeric children.
-        if (!is_numeric($index)) {
-          continue;
-        }
-        $element = $form[$field_name][$langcode][$index];
-
-        // Create a new field collection entity with the values.
-        $field_collection_item = entity_create('field_collection_item', array('field_name' => $field_name));
-        $field_collection_item->setHostEntity($entity_type, $entity, $langcode, FALSE);
-        field_attach_form_validate('field_collection_item', $field_collection_item, $element, $form_state);
-        field_attach_submit('field_collection_item', $field_collection_item, $element, $form_state);
-        _field_invoke_multiple('load', 'field_collection_item', array($field_collection_item->item_id => $field_collection_item));
-
-        // Stash it for later use.
-        $field_collection_fields[$field_name][$langcode][] = array(
-          'entity' => $field_collection_item,
-        );
-      }
-
-      // Clear out the field so the values don't get submitted.
-      $entity->{$field_name}[$langcode] = array();
-    }
-  }
-
-  return $field_collection_fields;
-}
-
-/**
  * Ajax callback that just returns the rendered preview.
  */
 function panopoly_magic_ajax_update_preview($form, $form_state) {
@@ -671,19 +612,7 @@ function panopoly_magic_form_post_render_preview($output, $form) {
   if (empty($preview_callback)) {
     $preview_callback = 'ctools_content_render';
   }
-
-  // If there is a 'destination', temporarily change the 'q' parameter so the
-  // pane renders as if we are on that path.
-  // @see https://www.drupal.org/node/2177417
-  $original_path = $_GET['q'];
-  if (!empty($_GET['destination'])) {
-    $_GET['q'] = $_GET['destination'];
-  }
-
-  $content = $preview_callback($pane->type, $pane->subtype, $configuration, $keywords, $args, $context, $extra);
-
-  // Restore the 'q' to its original value.
-  $_GET['q'] = $original_path;
+  $content = $preview_callback($pane->type, $pane->subtype, $configuration, $keywords, $args, $context);
 
   if (!empty($content)) {
     // Wrap the widget content in the style plugin.
@@ -709,8 +638,8 @@ function panopoly_magic_form_post_render_preview($output, $form) {
 /**
  * Renders previews for fieldable_panels_pane content types.
  */
-function panopoly_magic_render_fieldable_panels_pane_preview($type, $subtype, $conf, $keywords, $args, $context, $extra) {
-  $entity = $extra['fieldable_panels_pane'];
+function panopoly_magic_render_fieldable_panels_pane_preview($type, $subtype, $conf, $keywords, $args, $context) {
+  $entity = $conf['fieldable_panels_pane'];
   // Prevents PHP notice when not admin user (see issue #2463389).
   if (!isset($entity->view_access)) {
     $entity->view_access = NULL;
@@ -723,7 +652,7 @@ function panopoly_magic_render_fieldable_panels_pane_preview($type, $subtype, $c
     $block->title = '';
     if (empty($settings['extra_fields']['display']) || !empty($settings['extra_fields']['display']['title']['default']['visible'])) {
       if (!empty($entity->title)) {
-        $block->title = filter_xss_admin($entity->title);
+        $block->title = check_plain($entity->title);
       }
     }
 
@@ -795,7 +724,9 @@ function panopoly_magic_form_fieldable_panels_panes_fieldable_panels_pane_conten
   }
 
   // Add custom validation function for the reusable title
-  $form['reusable']['admin_title']['#element_validate'][] = 'panopoly_magic_reusable_entity_validate';
+  if (!empty($form_state['triggering_element']) && $form_state['triggering_element']['#value'] != 'Update Preview') {
+    $form['reusable']['admin_title']['#element_validate'][] = 'panopoly_magic_reusable_entity_validate';
+  }
 
   // Customize the view mode setting
   if (!empty($form['view_mode'])) {
@@ -1399,11 +1330,6 @@ function panopoly_magic_form_ctools_stylizer_edit_style_form_choose_alter(&$form
  *  Validator to ensure that reusable entites have titles.
  */
 function panopoly_magic_reusable_entity_validate($element, &$form_state, $form) {
-  // Don't validate if we're just updating the preview.
-  if (!empty($form_state['triggering_element']) && $form_state['triggering_element']['#value'] == 'Update Preview') {
-    return;
-  }
-
   // If the reusable entity checkbox is selected.
   if (!empty($form_state['values']['reusable'])) {
     // Ensure a title is present.
@@ -1495,119 +1421,24 @@ function panopoly_magic_views_pre_view(&$view) {
 }
 
 /**
- * Default 'preview callback' for widgets when we can't find something more specific.
+ * Helper function to display the pane for showing previews in the add_content modal
  */
-function panopoly_magic_preview_callback_default($type, $subtype, $plugin, $renderer) {
-  $pane = panels_new_pane($type, $subtype, TRUE);
-
-  // Mix in requested settings.
-  if (!empty($plugin['preview settings'])) {
-    $pane->configuration = array_merge($pane->configuration, $plugin['preview settings']);
-  }
-
+function _panopoly_magic_render_preview_pane(&$plugin, $renderer) {
+  $pane = panels_new_pane($plugin['type_name'], $plugin['subtype_name'], TRUE);
   $display = $renderer->display;
   $context = $renderer->display->context;
   $args = $renderer->display->args;
   $incoming_content = $renderer->display->incoming_content;
   $keywords = (!empty($renderer->display->keywords)) ? $renderer->display->keywords : array();
-  $content = ctools_content_render($pane->type, $pane->subtype, $pane->configuration, $keywords, $args, $context, $incoming_content);
-  if ($content) {
-    return theme('panels_pane', array('content' => $content, 'pane' => $pane, 'display' => $display));
-  }
-}
-
-/**
- * Default 'preview callback' for FPP widgets.
- */
-function panopoly_magic_preview_callback_fpp($type, $subtype, $plugin, $renderer) {
-  if (!empty($plugin['entity_id'])) {
-    $fpp = fieldable_panels_panes_load_from_subtype($plugin['entity_id']);
-  }
-  elseif (!empty($plugin['preview settings'])) {
-    $values = $plugin['preview settings'];
-    $values['bundle'] = $plugin['bundle'];
-    $fpp = fieldable_panels_panes_create($values);
-    $fpp->fpid = NULL;
-  }
-  else {
-    // For a new (non-existant) FPP with no 'preview settings', don't show
-    // any preview.
-    return NULL;
-  }
-
-  // Set a property so it's possible to tell that the FPP is being rendered
-  // in a preview, for example, in the template.
-  $fpp->panopoly_magic_preview = TRUE;
-
-  $content = fieldable_panels_pane_view($fpp, 'full', NULL);
-  if ($content) {
-    $block = (object)array(
-      'title' => check_plain($fpp->title),
-      'content' => $content,
-      'type' => $type,
-      'subtype' => $subtype,
-    );
-    $pane = panels_new_pane($type, $subtype, TRUE);
-    return theme('panels_pane', array('content' => $block, 'pane' => $pane, 'display' => $renderer->display));
-  }
-}
-
-/**
- * Default 'preview callback' for when a 'preview image' is used.
- */
-function panopoly_magic_preview_callback_image($type, $subtype, $plugin, $renderer) {
-  if (empty($plugin['preview image alt'])) {
-    $plugin['preview image alt'] = NULL;
-  }
-  return theme('image', array('path' => $plugin['preview image'], 'alt' => $plugin['preview image alt']));
-}
-
-/**
- * Helper function to display the pane for showing previews in the add_content modal
- */
-function _panopoly_magic_render_preview_pane(&$widget_vars, $renderer) {
-  $type = $widget_vars['type_name'];
-  $subtype = $widget_vars['subtype_name'];
-  $plugin = ctools_content_get_subtype($type, $subtype);
-
-  // Special case for reusable FPPs: by default we force the FPP callback so
-  // that the entity is rendered, and the custom callback or image isn't used.
-  // However, if a special key on the plugin subtype ('preview always') is set,
-  // then we won't force the FPP callback and the custom preview will always
-  // be used (regardless if it's a reusable FPP or not).
-  if ($type == 'fieldable_panels_pane' && !empty($plugin['entity_id']) && empty($plugin['preview always'])) {
-    $plugin['preview callback'] = 'panopoly_magic_preview_callback_fpp';
-  }
-
-  if (!empty($plugin['preview callback'])) {
-    $preview_callback = $plugin['preview callback'];
-  }
-  elseif (!empty($plugin['preview image'])) {
-    $preview_callback = 'panopoly_magic_preview_callback_image';
-  }
-  elseif ($type == 'fieldable_panels_pane') {
-    $preview_callback = 'panopoly_magic_preview_callback_fpp';
-  }
-  else {
-    $preview_callback = 'panopoly_magic_preview_callback_default';
-  }
-
-  if ($content = $preview_callback($type, $subtype, $plugin, $renderer)) {
-    // Permit the callback to return a render array.
-    if (is_array($content)) {
-      $content = drupal_render($content);
-    }
-
-    // Optionally strip JavaScript.
+  if ($content = ctools_content_render($pane->type, $pane->subtype, $pane->configuration, $keywords, $args, $context, $incoming_content)) {
     $strip_js = variable_get('panopoly_magic_strip_js_from_preview', 0);
-    if (!empty($strip_js) && !empty($content)) {
-      $content = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $content);
+    $plugin['preview'] = theme('panels_pane', array('content' => $content, 'pane' => $pane, 'display' => $display));
+    if (!empty($strip_js) && !empty($plugin['preview'])) {
+      $plugin['preview'] = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $plugin['preview']);
     }
-
-    $widget_vars['preview'] = $content;
     drupal_add_js(array('panopoly_magic' => array(
-      'pane_add_preview_type' => $type,
-      'pane_add_preview_subtype' => $subtype,
+      'pane_add_preview_type' => $pane->type,
+      'pane_add_preview_subtype' => $pane->subtype,
     )), 'setting');
   }
 }
@@ -1628,16 +1459,16 @@ function panopoly_magic_preprocess_panels_add_content_modal(&$vars) {
       $query = drupal_get_query_parameters();
       $type_name = !empty($query['type_name']) ? $query['type_name'] : '';
       $sub_type = !empty($query['subtype_name']) ? $query['subtype_name'] : '';
-      $widget_vars = array(
+      $plugin = array(
         'type_name' => $type_name,
         'subtype_name' => $sub_type,
       );
-      _panopoly_magic_render_preview_pane($widget_vars, $vars['renderer']);
+      _panopoly_magic_render_preview_pane($plugin, $vars['renderer']);
       $vars['column_count'] = 1;
-      $vars['preview_single'] = isset($widget_vars['preview']) ? $widget_vars['preview'] : '';
+      $vars['preview_single'] = isset($plugin['preview']) ? $plugin['preview'] : '';
       $vars['preview_single_title'] = '';
-      foreach ($vars['categories'][$vars['category']]['content'] as $key => $widget_vars) {
-        if ($widget_vars['type_name'] == $type_name && $widget_vars['subtype_name'] == $sub_type) {
+      foreach ($vars['categories'][$vars['category']]['content'] as $key => $plugin) {
+        if ($plugin['type_name'] == $type_name && $plugin['subtype_name'] == $sub_type) {
           $vars['preview_single_title'] = $key;
           break;
         }
@@ -1645,7 +1476,7 @@ function panopoly_magic_preprocess_panels_add_content_modal(&$vars) {
     }
 
     // Process each widget option, either adding the preview itself or a link to generate it.
-    foreach ($vars['categories'][$vars['category']]['content'] as $key => &$widget_vars) {
+    foreach ($vars['categories'][$vars['category']]['content'] as $key => &$plugin) {
       $query = drupal_get_query_parameters();
       $preview_panes = (!empty($query['preview_panes'])) ? explode(',', $query['preview_panes']) : array();
 
@@ -1654,34 +1485,29 @@ function panopoly_magic_preprocess_panels_add_content_modal(&$vars) {
         // Convert the link to generate a preview of itself.
         $options = array(
           'query' => array(
-            'panopoly_magic_preview' => _panopoly_magic_add_content_preview_mode_name($use_preview),
-            'type_name' => $widget_vars['type_name'],
-            'subtype_name' => $widget_vars['subtype_name'],
+            'type_name' => $plugin['type_name'],
+            'subtype_name' => $plugin['subtype_name'],
           ),
           'attributes' => array('class' => array('use-ajax button')),
           'html' => TRUE,
         );
-        $widget_vars['title'] = l(t('<span class="element-invisible">Preview</span> !widget <span class="element-invisible">widget</span>', array('!widget' => filter_xss_admin($widget_vars['title']))), current_path(), $options);
+        $plugin['title'] = l(filter_xss_admin($plugin['title']), current_path(), $options);
       }
-      elseif ($use_preview == PANOPOLY_ADD_PREVIEW_AUTOMATIC || in_array($widget_vars['subtype_name'], $preview_panes)) {
-        _panopoly_magic_render_preview_pane($widget_vars, $vars['renderer']);
+      elseif ($use_preview == PANOPOLY_ADD_PREVIEW_AUTOMATIC || in_array($plugin['subtype_name'], $preview_panes)) {
+        _panopoly_magic_render_preview_pane($plugin, $vars['renderer']);
       }
       else {
 
         // If we can't preview then generate a preview link.
-        $preview = empty($query['preview_panes']) ? $widget_vars['subtype_name'] : $query['preview_panes'] . ',' . $widget_vars['subtype_name'];
+        $preview = empty($query['preview_panes']) ? $plugin['subtype_name'] : $query['preview_panes'] . ',' . $plugin['subtype_name'];
         $options = array(
-          'query' => array(
-            'panopoly_magic_preview' => _panopoly_magic_add_content_preview_mode_name($use_preview),
-            'preview_panes' => $preview
-          ),
+          'query' => array('preview_panes' => $preview),
           'attributes' => array(
             'class' => array('use-ajax button'),
             'title' => t('Preview @widget widget', array('@widget' => $key)),
           ),
-          'html' => TRUE,
         );
-        $widget_vars['preview'] = '<div class="modal-content-preview-button">' . l(t('Preview <span class="element-invisible">!widget widget</span>', array('!widget' => filter_xss_admin($key))), current_path(), $options) . '</div>';
+        $plugin['preview'] = '<div class="modal-content-preview-button">' . l(t('Preview'), current_path(), $options) . '</div>';
       }
     }
   }
@@ -1691,8 +1517,7 @@ function panopoly_magic_preprocess_panels_add_content_modal(&$vars) {
  * Helper function to render the Panels add content link.
  */
 function _panopoly_magic_render_add_content_link($vars, $content_type, $title) {
-  $content_type['title'] = t('Add <span class="element-invisible">@widget_name</span>', array('@widget_name' => $title));
-  $content_type['panopoly_magic_add_button'] = TRUE;
+  $content_type['title'] = t('Add');
   // @todo: Investigate why view_panes are missing description.
   if (empty($content_type['description'])) {
     $content_type['description'] = $title;
@@ -1720,11 +1545,6 @@ function template_preprocess_panopoly_magic_preview(&$vars) {
   $vars['classes_array'][] = 'widget-preview';
   if (!empty($vars['single'])) {
     $vars['classes_array'][] = 'widget-preview-single';
-  }
-
-  // A class identifying the widget.
-  if (isset($vars['preview_subtype_name'])) {
-    $vars['classes_array'][] = 'panopoly-magic-preview-' . str_replace(':', '-', $vars['preview_subtype_name']);
   }
 
   // For backcompat with themes that depend on the fieldset markup.
@@ -1818,7 +1638,6 @@ function panopoly_magic_process_panels_add_content_modal(&$vars) {
           'title' => $legend_title,
           'add_link' => $add_content_link,
           'preview' => $preview,
-          'preview_subtype_name' => $content[$title]['subtype_name'],
         ));
       }
     }
@@ -1879,29 +1698,6 @@ function panopoly_magic_view_mode_options($entity_type = 'node') {
     }
   }
   return $options;
-}
-
-/**
- * Helper function to get name of the 'Add content' preview mode.
- */
-function _panopoly_magic_add_content_preview_mode_name($value = NULL) {
-  if (is_null($value)) {
-    $value = variable_get('panopoly_magic_pane_add_preview', PANOPOLY_ADD_PREVIEW_DEFAULT);
-  }
-
-  switch ($value) {
-    case PANOPOLY_ADD_PREVIEW_SINGLE:
-      return 'single';
-
-    case PANOPOLY_ADD_PREVIEW_DISABLED:
-      return 'disabled';
-
-    case PANOPOLY_ADD_PREVIEW_AUTOMATIC:
-      return 'automatic';
-
-    case PANOPOLY_ADD_PREVIEW_MANUAL:
-      return 'manual';
-  }
 }
 
 /**

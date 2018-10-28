@@ -6,14 +6,12 @@
  */
 
 class MigrateGroup {
-
   /**
    * The machine name of the group - used to identify it in drush commands.
    *
    * @var string
    */
   protected $name;
-
   public function getName() {
     return $this->name;
   }
@@ -24,7 +22,6 @@ class MigrateGroup {
    * @var string
    */
   protected $title;
-
   public function getTitle() {
     return $this->title;
   }
@@ -36,7 +33,6 @@ class MigrateGroup {
    * @var array
    */
   protected $arguments = array();
-
   public function getArguments() {
     return $this->arguments;
   }
@@ -47,7 +43,6 @@ class MigrateGroup {
    * @var array
    */
   protected $dependencies = array();
-
   public function getDependencies() {
     return $this->dependencies;
   }
@@ -58,7 +53,6 @@ class MigrateGroup {
    * @var array
    */
   static protected $groupList = array();
-
   static public function groups() {
     $groups = array();
     $dependent_groups = array();
@@ -116,10 +110,10 @@ class MigrateGroup {
   static public function getInstance($name, $dependencies = array()) {
     if (empty(self::$groupList[$name])) {
       $row = db_select('migrate_group', 'mg')
-        ->fields('mg')
-        ->condition('name', $name)
-        ->execute()
-        ->fetchObject();
+             ->fields('mg')
+             ->condition('name', $name)
+             ->execute()
+             ->fetchObject();
       if ($row) {
         $arguments = unserialize($row->arguments);
         $arguments = MigrationBase::decryptArguments($arguments);
@@ -147,8 +141,8 @@ class MigrateGroup {
    *  A user-visible title for the group. Defaults to the machine name.
    *
    * @param array $arguments
-   *  An array of group arguments - generally data that applies to all
-   *   migrations in the group.
+   *  An array of group arguments - generally data that applies to all migrations
+   *  in the group.
    */
   static public function register($name, $title = NULL, array $arguments = array()) {
     if (!$title) {
@@ -162,9 +156,9 @@ class MigrateGroup {
     db_merge('migrate_group')
       ->key(array('name' => $name))
       ->fields(array(
-        'title' => $title,
-        'arguments' => serialize($arguments),
-      ))
+                'title' => $title,
+                'arguments' => serialize($arguments)
+        ))
       ->execute();
   }
 
@@ -178,9 +172,9 @@ class MigrateGroup {
    */
   static public function deregister($name) {
     $result = db_select('migrate_status', 'ms')
-      ->fields('ms', array('machine_name'))
-      ->condition('group_name', $name)
-      ->execute();
+              ->fields('ms', array('machine_name'))
+              ->condition('group_name', $name)
+              ->execute();
     foreach ($result as $row) {
       Migration::deregisterMigration($row->machine_name);
     }

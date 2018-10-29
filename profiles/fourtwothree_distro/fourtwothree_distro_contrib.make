@@ -126,17 +126,17 @@ projects[xmlsitemap][subdir] = 423contrib
 
 ;Patches
 #from https://www.drupal.org/node/2225315
-projects[entity_rules][patch][] = "https://www.drupal.org/files/issues/entity_rules_entity_rules_get_form_entity_type_settings.patch" 
+projects[entity_rules][patch][] = "https://www.drupal.org/files/issues/entity_rules_entity_rules_get_form_entity_type_settings.patch"
 
 #from https://www.drupal.org/node/2201263
-projects[entity_rules][patch][] = "https://www.drupal.org/files/issues/entity_rules_entity_rules_get_type_settings.patch" 
+projects[entity_rules][patch][] = "https://www.drupal.org/files/issues/entity_rules_entity_rules_get_type_settings.patch"
 
 #from https://www.drupal.org/node/2163545
-projects[superfish][patch][2163545] = https://drupal.org/files/issues/superfish-drush_make_master-2163545-2.patch
+projects[superfish][patch][2163545] = "https://drupal.org/files/issues/superfish-drush_make_master-2163545-2.patch"
 
-projects[defaultconfig][patch][] =
-"https://www.drupal.org/files/issues/1900574.defaultconfig.undefinedindex_13.patch"
+projects[defaultconfig][patch][13] = "https://www.drupal.org/files/issues/1900574.defaultconfig.undefinedindex_13.patch"
 #https://www.drupal.org/node/1900574
+projects[entity][patch][] = "https://www.drupal.org/files/issues/entity-1312374-42-fatal-error-if-missing-property-callback.patch"
 
 
 ; Themes

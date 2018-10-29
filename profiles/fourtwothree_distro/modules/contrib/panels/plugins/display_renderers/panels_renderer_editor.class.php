@@ -218,7 +218,7 @@ class panels_renderer_editor extends panels_renderer_standard {
   function get_display_links() {
     $links = array();
 
-    if (user_access('administer panels styles')) {
+    if (user_access('administer panels display styles')) {
       $style_links = $this->get_style_links('display');
       $links[] = array(
         'title' => '<span class="dropdown-header">' . t('Style') . '</span>' . theme_links(array('links' => $style_links, 'attributes' => array(), 'heading' => array())),
@@ -280,7 +280,7 @@ class panels_renderer_editor extends panels_renderer_standard {
       ),
     );
 
-    if (user_access('administer panels styles')) {
+    if (user_access('administer panels region styles')) {
       $links[] = array(
         'title' => '<hr />',
         'html' => TRUE,
@@ -512,6 +512,40 @@ class panels_renderer_editor extends panels_renderer_standard {
     }
 
     return $url;
+  }
+
+  /**
+   * Get the Panels storage oparation for a given renderer AJAX method.
+   *
+   * @param string $method
+   *   The method name.
+   *
+   * @return string
+   *   The Panels storage op.
+   */
+  function get_panels_storage_op_for_ajax($method) {
+    switch ($method) {
+      case 'ajax_show':
+      case 'ajax_hide':
+      case 'ajax_select_content':
+      case 'ajax_add_pane':
+      case 'ajax_edit_pane':
+      case 'ajax_panel_title':
+      case 'ajax_cache_method':
+      case 'ajax_cache_settings':
+      case 'ajax_style_type':
+      case 'ajax_style_settings':
+      case 'ajax_pane_css':
+      case 'ajax_lock':
+      case 'ajax_access_settings':
+      case 'ajax_access_add_test':
+      case 'ajax_access_configure_test':
+      case 'ajax_layout':
+      case 'ajax_style':
+        return 'update';
+    }
+
+    return parent::get_panels_storage_op_for_ajax($method);
   }
 
   /**
@@ -1506,7 +1540,7 @@ function panels_ajax_edit_pane_next(&$form_state) {
 }
 
 /**
- * Handle the 'finish' click on teh add/edit pane form wizard.
+ * Handle the 'finish' click on the add/edit pane form wizard.
  *
  * All we need to do is set a flag so the return can handle adding
  * the pane.
@@ -1779,13 +1813,13 @@ function panels_edit_configure_pane_css_form($form, &$form_state) {
     '#type' => 'textfield',
     '#default_value' => isset($pane->css['css_id']) ? $pane->css['css_id'] : '',
     '#title' => t('CSS ID'),
-    '#description' => t('CSS ID to apply to this pane. This may be blank.'),
+    '#description' => t('CSS ID to apply to this pane. This may be blank. Keywords from context are allowed.'),
   );
   $form['css_class'] = array(
     '#type' => 'textfield',
     '#default_value' => isset($pane->css['css_class']) ? $pane->css['css_class'] : '',
     '#title' => t('CSS class'),
-    '#description' => t('CSS class to apply to this pane. This may be blank.'),
+    '#description' => t('CSS class to apply to this pane. This may be blank. Keywords from context are allowed.'),
   );
 
   $form['next'] = array(

@@ -19,8 +19,9 @@ projects[wysiwyg_filter][patch][1687794] = https://www.drupal.org/files/wysiwyg_
 
 ; The WYSIWYG Helpers
 
-projects[linkit][version] = 3.4
+projects[linkit][version] = 3.5
 projects[linkit][subdir] = contrib
+projects[linkit][patch][2651404] = https://www.drupal.org/files/issues/linkit-add-to-any-element-2651404-3.patch
 
 projects[image_resize_filter][version] = 1.15
 projects[image_resize_filter][subdir] = contrib
@@ -38,6 +39,7 @@ projects[caption_filter][patch][2455253] = https://www.drupal.org/files/issues/c
 libraries[tinymce][download][type] = get
 libraries[tinymce][download][url] = http://download.moxiecode.com/tinymce/tinymce_3.5.11.zip
 libraries[tinymce][patch][1561882] = http://drupal.org/files/1561882-cirkuit-theme-tinymce-3.5.8.patch
+libraries[tinymce][patch][2876031] = https://www.drupal.org/files/issues/tinymce-chrome58-fix-2876031-5.patch
 
 libraries[markitup][download][type] = git
 libraries[markitup][download][url] = https://github.com/markitup/1.x.git

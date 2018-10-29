@@ -121,18 +121,18 @@
    */
   Drupal.theme.prototype.CToolsModalDialog = function () {
     var html = ''
-    html += '  <div id="ctools-modal">'
-    html += '    <div class="ctools-modal-content">' // panels-modal-content
-    html += '      <div class="modal-header">';
-    html += '        <a class="close" href="#">';
-    html +=            Drupal.CTools.Modal.currentSettings.closeText + Drupal.CTools.Modal.currentSettings.closeImage;
-    html += '        </a>';
-    html += '        <span id="modal-title" class="modal-title">&nbsp;</span>';
-    html += '      </div>';
-    html += '      <div id="modal-content" class="modal-content">';
-    html += '      </div>';
+    html += '<div id="ctools-modal">'
+    html += '  <div class="ctools-modal-content">' // panels-modal-content
+    html += '    <div class="modal-header">';
+    html += '      <a class="close" href="#">';
+    html +=          Drupal.CTools.Modal.currentSettings.closeText + Drupal.CTools.Modal.currentSettings.closeImage;
+    html += '      </a>';
+    html += '      <span id="modal-title" class="modal-title">&nbsp;</span>';
+    html += '    </div>';
+    html += '    <div id="modal-content" class="modal-content">';
     html += '    </div>';
     html += '  </div>';
+    html += '</div>';
 
     return html;
   }
@@ -142,11 +142,11 @@
    */
   Drupal.theme.prototype.CToolsModalThrobber = function () {
     var html = '';
-    html += '  <div id="modal-throbber">';
-    html += '    <div class="modal-throbber-wrapper">';
-    html +=        Drupal.CTools.Modal.currentSettings.throbber;
-    html += '    </div>';
+    html += '<div id="modal-throbber">';
+    html += '  <div class="modal-throbber-wrapper">';
+    html +=      Drupal.CTools.Modal.currentSettings.throbber;
     html += '  </div>';
+    html += '</div>';
 
     return html;
   };
@@ -265,7 +265,7 @@
           }
           // An empty event means we were triggered via .click() and
           // in jquery 1.4 this won't trigger a submit.
-          if (event.bubbles == undefined) {
+          if (typeof event.bubbles === "undefined") {
             $(this.form).trigger('submit');
             return false;
           }
@@ -558,7 +558,7 @@
 
     // Bind a click for closing the modalContent
     modalContentClose = function(){close(); return false;};
-    $('.close').bind('click', modalContentClose);
+    $('#modalContent .modal-header .close').bind('click', modalContentClose);
 
     // Bind a keypress on escape for closing the modalContent
     modalEventEscapeCloseHandler = function(event) {
@@ -574,7 +574,7 @@
     // close button, but we should save the original focus to restore it after
     // the dialog is closed.
     var oldFocus = document.activeElement;
-    $('.close').focus();
+    $('#modalContent .modal-header .close').focus();
 
     // Close the open modal content and backdrop
     function close() {
@@ -583,7 +583,7 @@
       $('body').unbind( 'focus', modalEventHandler);
       $('body').unbind( 'keypress', modalEventHandler );
       $('body').unbind( 'keydown', modalTabTrapHandler );
-      $('.close').unbind('click', modalContentClose);
+      $('#modalContent .modal-header .close').unbind('click', modalContentClose);
       $('body').unbind('keypress', modalEventEscapeCloseHandler);
       $(document).trigger('CToolsDetachBehaviors', $('#modalContent'));
 
@@ -659,7 +659,7 @@
     $('body').unbind('focus', modalEventHandler);
     $('body').unbind('keypress', modalEventHandler);
     $('body').unbind( 'keydown', modalTabTrapHandler );
-    $('.close').unbind('click', modalContentClose);
+    $('#modalContent .modal-header .close').unbind('click', modalContentClose);
     $('body').unbind('keypress', modalEventEscapeCloseHandler);
     $(document).trigger('CToolsDetachBehaviors', $('#modalContent'));
 

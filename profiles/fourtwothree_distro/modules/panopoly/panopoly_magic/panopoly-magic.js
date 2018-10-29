@@ -1,7 +1,6 @@
 (function ($) {
   Drupal.behaviors.panopolyMagic = {
     attach: function (context, settings) {
- 
       /**
        * Title Hax for Panopoly
        *
@@ -12,16 +11,6 @@
         $('.pane-node-title .pane-content').html('');
         $('h1.title').hide().clone().prependTo('.pane-node-title .pane-content');
         $('.pane-node-title h1.title').show();
-      }
- 
-      // Focus on the 'Add' button for a single widget preview, after it's loaded.
-      if (settings.panopoly_magic && settings.panopoly_magic.pane_add_preview_mode === 'single' && settings.panopoly_magic.pane_add_preview_subtype) {
-        // Need to defer until current set of behaviors is done, because Panels
-        // will move the focus to the first widget by default.
-        setTimeout(function () {
-          var link_class = 'add-content-link-' + settings.panopoly_magic.pane_add_preview_subtype.replace(/_/g, '-') + '-icon-text-button';
-          $('#modal-content .panopoly-magic-preview-link .content-type-button a.' + link_class, context).focus();
-        }, 0);
       }
     }
   };
@@ -83,39 +72,23 @@
     };
   }
 
-  // A function to run before Drupal.wysiwygAttach() with the same arguments.
-  function beforeWysiwygAttach(context, params) {
-    var editorId = params.field,
-        editorType = params.editor,
-        format = params.format;
-
-    if (Drupal.settings.wysiwyg.configs[editorType] && Drupal.settings.wysiwyg.configs[editorType][format]) {
-      wysiwygConfigAlter(params, Drupal.settings.wysiwyg.configs[editorType][format]);
-    }
+  // A function to run before Drupal.wysiwyg.editor.attach.tinymce() with the
+  // same arguments.
+  function wysiwygTinymceBeforeAttach(context, params, settings) {
+    var onWysiwygChange = onWysiwygChangeFactory(params.field);
+    settings['setup'] = function (editor) {
+      editor.onChange.add(onWysiwygChange);
+      editor.onKeyUp.add(onWysiwygChange);
+    };
   }
 
-  // Wouldn't it be great if WYSIWYG gave us an alter hook to change the
-  // settings of the editor before it was attached? Well, we'll just have to
-  // roll our own. :-)
-  function wysiwygConfigAlter(params, config) {
-    var editorId = params.field,
-        editorType = params.editor,
-        onWysiwygChange = onWysiwygChangeFactory(editorId);
-
-    switch (editorType) {
-      case 'markitup':
-        $.each(['afterInsert', 'onEnter'], function (index, funcName) {
-          config[funcName] = onWysiwygChange;
-        });
-        break;
-
-      case 'tinymce':
-        config['setup'] = function (editor) {
-          editor.onChange.add(onWysiwygChange);
-          editor.onKeyUp.add(onWysiwygChange);
-        }
-        break;
-    }
+  // A function to run before Drupal.wysiwyg.editor.attach.markitup() with the
+  // same arguments.
+  function wysiwygMarkitupBeforeAttach(context, params, settings) {
+    var onWysiwygChange = onWysiwygChangeFactory(params.field);
+    $.each(['afterInsert', 'onEnter'], function (index, funcName) {
+      settings[funcName] = onWysiwygChange;
+    });
   }
 
   // Used to wrap a function with a beforeFunc (we use it for wrapping
@@ -139,18 +112,49 @@
     };
   }
 
-
   /**
    * Improves the Auto Submit Experience for CTools Modals
    */
   Drupal.behaviors.panopolyMagicAutosubmit = {
     attach: function (context, settings) {
+      // Move focus to preview after it's shown.
+      $('body').once(function () {
+        if (typeof Drupal.CTools !== 'undefined' && typeof Drupal.CTools.Modal !== 'undefined' && typeof Drupal.CTools.Modal.modal_display) {
+          var modal_display = Drupal.CTools.Modal.modal_display;
+          Drupal.CTools.Modal.modal_display = function (ajax, response, status) {
+            var url = ajax.url,
+                params = {},
+                widget_name;
+
+            // Do the parent operation.
+            modal_display(ajax, response, status);
+
+            // Parse the GET arguments.
+            url.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str, key, value) {
+              params[key] = value;
+            })
+            if (params['panopoly_magic_preview'] == 'manual') {
+              widget_name = decodeURIComponent(params['preview_panes']).split(',').pop();
+              widget_name.replace(':', '-');
+              widget_name.replace(/[^a-zA-Z0-9_]/g, '');
+              // Need to defer until current set of behaviors is done, because Panels
+              // will move the focus to the first widget by default.
+              setTimeout(function () {
+                $('#modal-content .panopoly-magic-preview-' + widget_name + ' :focusable:first').focus();
+              }, 0);
+            }
+            else if (params['panopoly_magic_preview'] == 'single') {
+              // Ditto.
+              setTimeout(function () {
+                $('#modal-content .panopoly-magic-preview :focusable:first').focus();
+              }, 0);
+            }
+          };
+        }
+      });
+
       // Replaces click with mousedown for submit so both normal and ajax work.
       $('.ctools-auto-submit-click', context)
-      // Exclude the 'Style' type form because then you have to press the
-      // "Next" button multiple times.
-      // @todo: Should we include the places this works rather than excluding?
-      .filter(function () { return $(this).closest('form').attr('id').indexOf('panels-edit-style-type-form') !== 0; })
       .click(function(event) {
         if ($(this).hasClass('ajax-processed')) {
           event.stopImmediatePropagation();
@@ -200,8 +204,9 @@
       });
 
       // Handle WYSIWYG fields.
-      if (!wrappedWysiwygAttach && typeof Drupal.wysiwygAttach == 'function') {
-        wrapFunctionBefore(Drupal, 'wysiwygAttach', beforeWysiwygAttach);
+      if (!wrappedWysiwygAttach && typeof Drupal.wysiwyg != 'undefined' && typeof Drupal.wysiwyg.editor.attach.tinymce == 'function' && typeof Drupal.wysiwyg.editor.attach.markitup == 'function') {
+        wrapFunctionBefore(Drupal.wysiwyg.editor.attach, 'tinymce', wysiwygTinymceBeforeAttach);
+        //wrapFunctionBefore(Drupal.wysiwyg.editor.attach, 'markitup', wysiwygMarkitupBeforeAttach);
         wrappedWysiwygAttach = true;
 
         // Since the Drupal.behaviors run in a non-deterministic order, we can

@@ -472,12 +472,24 @@ button.ui-button::-moz-focus-inner {
   color: #ffffff;
 }
 
+/**
+ * When an input is used in the header, make sure it's color is dark, because
+ * the default background is probably light.
+ */
+.ui-widget-header input,
+.ui-widget-header button,
+.ui-widget-header select,
+.ui-widget-header optgroup,
+.ui-widget-header textarea {
+  color: #333;
+}
+
 /* Interaction states
 ----------------------------------*/
 .ui-state-default,
 .ui-widget-content .ui-state-default,
 .ui-widget-header .ui-state-default {
-  border: none;
+  border: 1px solid transparent;
   background: #cccccc;
   font-weight: normal;
   color: #333333;

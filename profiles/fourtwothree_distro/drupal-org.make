@@ -7,7 +7,7 @@ base= panopoly
  projects[panopoly][download][type] = git
  projects[panopoly][download][url] = git://github.com/pantheon-systems/drops-7.git
  projects[panopoly][version] = master
- 
+
 ; Pull in Custom Profile fourtwothree_distro:
  projects[fourtwothree_distro][type] = profile
  projects[fourtwothree_distro][download][type] = git
@@ -15,3 +15,4 @@ base= panopoly
  projects[fourtwothree_distro][version] = master
 
 
+ projects[core][patch][] = "https://www.drupal.org/files/issues/1551132-drupal-reinstall-schema-empty-tables-87-D7.patch"
